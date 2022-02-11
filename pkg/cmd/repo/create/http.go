@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cli/cli/v2/api"
+	"github.com/abdfnx/gh/api"
 )
 
 // repoCreateInput is input parameters for the repoCreate method
@@ -74,6 +74,7 @@ func repoCreate(client *http.Client, hostname string, input repoCreateInput) (*a
 		if err != nil {
 			return nil, err
 		}
+
 		teamIDv3 = team.ID
 		teamID = team.NodeID
 		ownerID = team.Organization.NodeID
@@ -83,6 +84,7 @@ func repoCreate(client *http.Client, hostname string, input repoCreateInput) (*a
 		if err != nil {
 			return nil, err
 		}
+
 		ownerID = owner.NodeID
 		isOrg = owner.IsOrganization()
 	}
@@ -160,6 +162,7 @@ func repoCreate(client *http.Client, hostname string, input repoCreateInput) (*a
 		if err != nil {
 			return nil, err
 		}
+
 		return repo, nil
 	}
 
@@ -238,6 +241,7 @@ func listGitIgnoreTemplates(httpClient *http.Client, hostname string) ([]string,
 	if err != nil {
 		return []string{}, err
 	}
+
 	return gitIgnoreTemplates, nil
 }
 
@@ -249,5 +253,6 @@ func listLicenseTemplates(httpClient *http.Client, hostname string) ([]api.Licen
 	if err != nil {
 		return nil, err
 	}
+
 	return licenseTemplates, nil
 }

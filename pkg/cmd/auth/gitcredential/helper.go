@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ func helperRun(opts *CredentialOptions) error {
 	}
 
 	if opts.Operation != "get" {
-		return fmt.Errorf("gh auth git-credential: %q operation not supported", opts.Operation)
+		return fmt.Errorf("secman auth git-credential: %q operation not supported", opts.Operation)
 	}
 
 	wants := map[string]string{}
@@ -100,21 +100,12 @@ func helperRun(opts *CredentialOptions) error {
 		return err
 	}
 
-	lookupHost := wants["host"]
 	var gotUser string
-	gotToken, source, _ := cfg.GetWithSource(lookupHost, "oauth_token")
-	if gotToken == "" && strings.HasPrefix(lookupHost, "gist.") {
-		lookupHost = strings.TrimPrefix(lookupHost, "gist.")
-		gotToken, source, _ = cfg.GetWithSource(lookupHost, "oauth_token")
-	}
-
+	gotToken, source, _ := cfg.GetWithSource(wants["host"], "oauth_token")
 	if strings.HasSuffix(source, "_TOKEN") {
 		gotUser = tokenUser
 	} else {
-		gotUser, _, _ = cfg.GetWithSource(lookupHost, "user")
-		if gotUser == "" {
-			gotUser = tokenUser
-		}
+		gotUser, _, _ = cfg.GetWithSource(wants["host"], "user")
 	}
 
 	if gotUser == "" || gotToken == "" {

@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/git"
 )
 
 type gitClient interface {
@@ -21,9 +20,7 @@ type gitClient interface {
 	ResetHard(string) error
 }
 
-type gitExecuter struct {
-	io *iostreams.IOStreams
-}
+type gitExecuter struct{}
 
 func (g *gitExecuter) BranchRemote(branch string) (string, error) {
 	args := []string{"rev-parse", "--symbolic-full-name", "--abbrev-ref", fmt.Sprintf("%s@{u}", branch)}
@@ -31,10 +28,12 @@ func (g *gitExecuter) BranchRemote(branch string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
 	}
+
 	parts := strings.SplitN(string(out), "/", 2)
 	return parts[0], nil
 }
@@ -44,6 +43,7 @@ func (g *gitExecuter) UpdateBranch(branch, ref string) error {
 	if err != nil {
 		return err
 	}
+
 	return cmd.Run()
 }
 
@@ -59,6 +59,7 @@ func (g *gitExecuter) CreateBranch(branch, ref, upstream string) error {
 	if err != nil {
 		return err
 	}
+
 	return cmd.Run()
 }
 
@@ -67,14 +68,12 @@ func (g *gitExecuter) CurrentBranch() (string, error) {
 }
 
 func (g *gitExecuter) Fetch(remote, ref string) error {
-	args := []string{"fetch", "-q", remote, ref}
+	args := []string{"fetch", remote, ref}
 	cmd, err := git.GitCommand(args...)
 	if err != nil {
 		return err
 	}
-	cmd.Stdin = g.io.In
-	cmd.Stdout = g.io.Out
-	cmd.Stderr = g.io.ErrOut
+
 	return cmd.Run()
 }
 
@@ -88,6 +87,7 @@ func (g *gitExecuter) IsAncestor(ancestor, progeny string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	err = cmd.Run()
 	return err == nil, nil
 }
@@ -97,13 +97,16 @@ func (g *gitExecuter) IsDirty() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	output, err := cmd.Output()
 	if err != nil {
 		return true, err
 	}
+
 	if len(output) > 0 {
 		return true, nil
 	}
+
 	return false, nil
 }
 
@@ -113,6 +116,7 @@ func (g *gitExecuter) MergeFastForward(ref string) error {
 	if err != nil {
 		return err
 	}
+
 	return cmd.Run()
 }
 
@@ -122,5 +126,6 @@ func (g *gitExecuter) ResetHard(ref string) error {
 	if err != nil {
 		return err
 	}
+
 	return cmd.Run()
 }

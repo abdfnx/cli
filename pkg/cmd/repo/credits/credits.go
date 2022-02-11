@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/utils"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/ghrepo"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -35,22 +35,22 @@ func NewCmdCredits(f *cmdutil.Factory, runF func(*CreditsOptions) error) *cobra.
 		HttpClient: f.HttpClient,
 		IO:         f.IOStreams,
 		BaseRepo:   f.BaseRepo,
-		Repository: "cli/cli",
+		Repository: "scmn-dev/gh-api",
 	}
 
 	cmd := &cobra.Command{
 		Use:   "credits",
 		Short: "View credits for this tool",
-		Long:  `View animated credits for gh, the tool you are currently using :)`,
+		Long:  `View animated credits for secman, the tool you are currently using :)`,
 		Example: heredoc.Doc(`
 			# see a credits animation for this project
-			$ gh credits
+			secman credits
 
 			# display a non-animated thank you
-			$ gh credits -s
+			secman credits -s
 
 			# just print the contributors, one per line
-			$ gh credits | cat
+			secman credits | cat
 		`),
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {

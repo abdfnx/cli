@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/abdfnx/gh/core/ghrepo"
 	"github.com/spf13/cobra"
 )
 
@@ -16,11 +16,13 @@ func executeParentHooks(cmd *cobra.Command, args []string) error {
 			return cmd.PersistentPreRunE(cmd, args)
 		}
 	}
+
 	return nil
 }
 
 func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
 	cmd.PersistentFlags().StringP("repo", "R", "", "Select another repository using the `[HOST/]OWNER/REPO` format")
+
 	_ = cmd.RegisterFlagCompletionFunc("repo", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		remotes, err := f.Remotes()
 		if err != nil {
@@ -31,6 +33,7 @@ func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
 		}
+
 		defaultHost, err := config.DefaultHost()
 		if err != nil {
 			return nil, cobra.ShellCompDirectiveError
@@ -42,10 +45,12 @@ func EnableRepoOverride(cmd *cobra.Command, f *Factory) {
 			if !strings.EqualFold(remote.RepoHost(), defaultHost) {
 				repo = remote.RepoHost() + "/" + repo
 			}
+
 			if strings.HasPrefix(repo, toComplete) {
 				results = append(results, repo)
 			}
 		}
+
 		sort.Strings(results)
 		return results, cobra.ShellCompDirectiveNoFileComp
 	})

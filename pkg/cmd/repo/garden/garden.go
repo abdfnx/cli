@@ -8,18 +8,19 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/utils"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/ghinstance"
+	"github.com/abdfnx/gh/core/ghrepo"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/utils"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 )
 
 type Geometry struct {
@@ -50,11 +51,10 @@ type Cell struct {
 }
 
 const (
-	DirUp Direction = iota
+	DirUp = iota
 	DirDown
 	DirLeft
 	DirRight
-	Quit
 )
 
 type Direction = int
@@ -90,7 +90,6 @@ type GardenOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
-	Config     func() (config.Config, error)
 
 	RepoArg string
 }
@@ -100,12 +99,11 @@ func NewCmdGarden(f *cmdutil.Factory, runF func(*GardenOptions) error) *cobra.Co
 		IO:         f.IOStreams,
 		HttpClient: f.HttpClient,
 		BaseRepo:   f.BaseRepo,
-		Config:     f.Config,
 	}
 
 	cmd := &cobra.Command{
 		Use:    "garden [<repository>]",
-		Short:  "Explore a git repository as a garden",
+		Short:  "Explore a git repository as a garden.",
 		Long:   "Use arrow keys, WASD or vi keys to move. q to quit.",
 		Hidden: true,
 		RunE: func(c *cobra.Command, args []string) error {
@@ -151,16 +149,7 @@ func gardenRun(opts *GardenOptions) error {
 		var err error
 		viewURL := opts.RepoArg
 		if !strings.Contains(viewURL, "/") {
-			cfg, err := opts.Config()
-			if err != nil {
-				return err
-			}
-			hostname, err := cfg.DefaultHost()
-			if err != nil {
-				return err
-			}
-
-			currentUser, err := api.CurrentLoginName(apiClient, hostname)
+			currentUser, err := api.CurrentLoginName(apiClient, ghinstance.Default())
 			if err != nil {
 				return err
 			}
@@ -193,6 +182,18 @@ func gardenRun(opts *GardenOptions) error {
 
 	maxCommits := (geo.Width * geo.Height) / 2
 
+	sttyFileArg := "-F"
+	if runtime.GOOS == "darwin" {
+		sttyFileArg = "-f"
+	}
+
+	oldTTYCommand := exec.Command("stty", sttyFileArg, "/dev/tty", "-g")
+	oldTTYSettings, err := oldTTYCommand.CombinedOutput()
+	if err != nil {
+		fmt.Fprintln(out, "getting TTY settings failed:", string(oldTTYSettings))
+		return err
+	}
+
 	opts.IO.StartProgressIndicator()
 	fmt.Fprintln(out, "gathering commits; this could take a minute...")
 	commits, err := getCommits(httpClient, toView, maxCommits)
@@ -214,42 +215,57 @@ func gardenRun(opts *GardenOptions) error {
 	clear(opts.IO)
 	drawGarden(opts.IO, garden, player)
 
-	// TODO: use opts.IO instead of os.Stdout
-	oldTermState, err := term.MakeRaw(int(os.Stdout.Fd()))
-	if err != nil {
-		return fmt.Errorf("term.MakeRaw: %w", err)
+	// thanks stackoverflow https://stackoverflow.com/a/17278776
+	_ = exec.Command("stty", sttyFileArg, "/dev/tty", "cbreak", "min", "1").Run()
+	_ = exec.Command("stty", sttyFileArg, "/dev/tty", "-echo").Run()
+
+	walkAway := func() {
+		clear(opts.IO)
+		fmt.Fprint(out, "\033[?25h")
+		_ = exec.Command("stty", sttyFileArg, "/dev/tty", strings.TrimSpace(string(oldTTYSettings))).Run()
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, cs.Bold("You turn and walk away from the wildflower garden..."))
 	}
 
-	dirc := make(chan Direction)
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		b := make([]byte, 3)
-		for {
-			_, _ = opts.IO.In.Read(b)
-			switch {
-			case isLeft(b):
-				dirc <- DirLeft
-			case isRight(b):
-				dirc <- DirRight
-			case isUp(b):
-				dirc <- DirUp
-			case isDown(b):
-				dirc <- DirDown
-			case isQuit(b):
-				dirc <- Quit
-			}
-		}
+		<-c
+		walkAway()
+		os.Exit(0)
 	}()
 
-mainLoop:
+	var b []byte = make([]byte, 3)
 	for {
+		_, _ = opts.IO.In.Read(b)
+
 		oldX := player.X
 		oldY := player.Y
+		moved := false
+		quitting := false
+		continuing := false
 
-		d := <-dirc
-		if d == Quit {
-			break mainLoop
-		} else if !player.move(d) {
-			continue mainLoop
+		switch {
+		case isLeft(b):
+			moved = player.move(DirLeft)
+		case isRight(b):
+			moved = player.move(DirRight)
+		case isUp(b):
+			moved = player.move(DirUp)
+		case isDown(b):
+			moved = player.move(DirDown)
+		case isQuit(b):
+			quitting = true
+		default:
+			continuing = true
+		}
+
+		if quitting {
+			break
+		}
+
+		if !moved || continuing {
+			continue
 		}
 
 		underPlayer := garden[player.Y][player.X]
@@ -299,12 +315,7 @@ mainLoop:
 		fmt.Fprint(out, cs.Bold(sl))
 	}
 
-	clear(opts.IO)
-	fmt.Fprint(out, "\033[?25h")
-	// TODO: use opts.IO instead of os.Stdout
-	_ = term.Restore(int(os.Stdout.Fd()), oldTermState)
-	fmt.Fprintln(out, cs.Bold("You turn and walk away from the wildflower garden..."))
-
+	walkAway()
 	return nil
 }
 
@@ -332,10 +343,8 @@ func isUp(b []byte) bool {
 	return bytes.EqualFold(b, up) || r == 'w' || r == 'k'
 }
 
-var ctrlC = []byte{0x3, 0x5b, 0x43}
-
 func isQuit(b []byte) bool {
-	return rune(b[0]) == 'q' || bytes.Equal(b, ctrlC)
+	return rune(b[0]) == 'q'
 }
 
 func plantGarden(commits []*Commit, geo *Geometry) [][]*Cell {

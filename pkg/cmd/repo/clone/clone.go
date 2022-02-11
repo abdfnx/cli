@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/core/ghrepo"
+	"github.com/abdfnx/gh/git"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -37,7 +37,7 @@ func NewCmdClone(f *cmdutil.Factory, runF func(*CloneOptions) error) *cobra.Comm
 
 		Use:   "clone <repository> [<directory>] [-- <gitflags>...]",
 		Args:  cmdutil.MinimumArgs(1, "cannot clone: repository argument required"),
-		Short: "Clone a repository locally",
+		Short: "Clone a repository locally.",
 		Long: heredoc.Doc(`
 			Clone a GitHub repository locally.
 
@@ -62,7 +62,8 @@ func NewCmdClone(f *cmdutil.Factory, runF func(*CloneOptions) error) *cobra.Comm
 		if err == pflag.ErrHelp {
 			return err
 		}
-		return cmdutil.FlagErrorf("%w\nSeparate git clone flags with '--'.", err)
+
+		return &cmdutil.FlagError{Err: fmt.Errorf("%w\nSeparate git clone flags with '--'.", err)}
 	})
 
 	return cmd
@@ -121,7 +122,7 @@ func cloneRun(opts *CloneOptions) error {
 			return err
 		}
 
-		protocol, err = cfg.GetOrDefault(repo.RepoHost(), "git_protocol")
+		protocol, err = cfg.Get(repo.RepoHost(), "git_protocol")
 		if err != nil {
 			return err
 		}
@@ -156,7 +157,7 @@ func cloneRun(opts *CloneOptions) error {
 
 	// If the repo is a fork, add the parent as an upstream
 	if canonicalRepo.Parent != nil {
-		protocol, err := cfg.GetOrDefault(canonicalRepo.Parent.RepoHost(), "git_protocol")
+		protocol, err := cfg.Get(canonicalRepo.Parent.RepoHost(), "git_protocol")
 		if err != nil {
 			return err
 		}

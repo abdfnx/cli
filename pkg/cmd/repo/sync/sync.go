@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/context"
-	gitpkg "github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/context"
+	"github.com/abdfnx/gh/core/ghrepo"
+	gitpkg "github.com/abdfnx/gh/git"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +34,7 @@ func NewCmdSync(f *cmdutil.Factory, runF func(*SyncOptions) error) *cobra.Comman
 		IO:         f.IOStreams,
 		BaseRepo:   f.BaseRepo,
 		Remotes:    f.Remotes,
-		Git:        &gitExecuter{io: f.IOStreams},
+		Git:        &gitExecuter{},
 	}
 
 	cmd := &cobra.Command{
@@ -44,27 +43,22 @@ func NewCmdSync(f *cmdutil.Factory, runF func(*SyncOptions) error) *cobra.Comman
 		Long: heredoc.Docf(`
 			Sync destination repository from source repository. Syncing uses the main branch
 			of the source repository to update the matching branch on the destination
-			repository so they are equal. A fast forward update will be used except when the
+			repository so they are equal. A fast forward update will be used execept when the
 			%[1]s--force%[1]s flag is specified, then the two branches will
 			by synced using a hard reset.
-
 			Without an argument, the local repository is selected as the destination repository.
-
 			The source repository is the parent of the destination repository by default.
 			This can be overridden with the %[1]s--source%[1]s flag.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Sync local repository from remote parent
-			$ gh repo sync
-
+			$ secman repo sync
 			# Sync local repository from remote parent on specific branch
-			$ gh repo sync --branch v1
-
+			$ secman repo sync --branch v1
 			# Sync remote fork from its parent
-			$ gh repo sync owner/cli-fork
-
+			$ secman repo sync owner/cli-fork
 			# Sync remote repository from another remote repository
-			$ gh repo sync owner/repo --source owner2/repo2
+			$ secman repo sync owner/repo --source owner2/repo2
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
@@ -115,6 +109,7 @@ func syncLocalRepo(opts *SyncOptions) error {
 	if err != nil {
 		return err
 	}
+
 	if r, err := remotes.FindByRepo(srcRepo.RepoOwner(), srcRepo.RepoName()); err == nil {
 		remote = r.Name
 	} else {
@@ -126,6 +121,7 @@ func syncLocalRepo(opts *SyncOptions) error {
 		if err != nil {
 			return err
 		}
+
 		apiClient := api.NewClientFromHTTP(httpClient)
 		opts.IO.StartProgressIndicator()
 		opts.Branch, err = api.RepoDefaultBranch(apiClient, srcRepo)
@@ -135,11 +131,6 @@ func syncLocalRepo(opts *SyncOptions) error {
 		}
 	}
 
-	// Git fetch might require input from user, so do it before starting progress indicator.
-	if err := opts.Git.Fetch(remote, fmt.Sprintf("refs/heads/%s", opts.Branch)); err != nil {
-		return err
-	}
-
 	opts.IO.StartProgressIndicator()
 	err = executeLocalRepoSync(srcRepo, remote, opts)
 	opts.IO.StopProgressIndicator()
@@ -147,9 +138,11 @@ func syncLocalRepo(opts *SyncOptions) error {
 		if errors.Is(err, divergingError) {
 			return fmt.Errorf("can't sync because there are diverging changes; use `--force` to overwrite the destination branch")
 		}
+
 		if errors.Is(err, mismatchRemotesError) {
 			return fmt.Errorf("can't sync because %s is not tracking %s", opts.Branch, ghrepo.FullName(srcRepo))
 		}
+
 		return err
 	}
 
@@ -169,6 +162,7 @@ func syncRemoteRepo(opts *SyncOptions) error {
 	if err != nil {
 		return err
 	}
+
 	apiClient := api.NewClientFromHTTP(httpClient)
 
 	var destRepo, srcRepo ghrepo.Interface
@@ -178,38 +172,55 @@ func syncRemoteRepo(opts *SyncOptions) error {
 		return err
 	}
 
-	if opts.SrcArg != "" {
+	if opts.SrcArg == "" {
+		opts.IO.StartProgressIndicator()
+		srcRepo, err = api.RepoParent(apiClient, destRepo)
+		opts.IO.StopProgressIndicator()
+		if err != nil {
+			return err
+		}
+
+		if srcRepo == nil {
+			return fmt.Errorf("can't determine source repository for %s because repository is not fork", ghrepo.FullName(destRepo))
+		}
+	} else {
 		srcRepo, err = ghrepo.FromFullName(opts.SrcArg)
 		if err != nil {
 			return err
 		}
 	}
 
-	if srcRepo != nil && destRepo.RepoHost() != srcRepo.RepoHost() {
+	if destRepo.RepoHost() != srcRepo.RepoHost() {
 		return fmt.Errorf("can't sync repositories from different hosts")
 	}
 
+	if opts.Branch == "" {
+		opts.IO.StartProgressIndicator()
+		opts.Branch, err = api.RepoDefaultBranch(apiClient, srcRepo)
+		opts.IO.StopProgressIndicator()
+		if err != nil {
+			return err
+		}
+	}
+
 	opts.IO.StartProgressIndicator()
-	baseBranchLabel, err := executeRemoteRepoSync(apiClient, destRepo, srcRepo, opts)
+	err = executeRemoteRepoSync(apiClient, destRepo, srcRepo, opts)
 	opts.IO.StopProgressIndicator()
 	if err != nil {
 		if errors.Is(err, divergingError) {
 			return fmt.Errorf("can't sync because there are diverging changes; use `--force` to overwrite the destination branch")
 		}
+
 		return err
 	}
 
 	if opts.IO.IsStdoutTTY() {
 		cs := opts.IO.ColorScheme()
-		branchName := opts.Branch
-		if idx := strings.Index(baseBranchLabel, ":"); idx >= 0 {
-			branchName = baseBranchLabel[idx+1:]
-		}
-		fmt.Fprintf(opts.IO.Out, "%s Synced the \"%s:%s\" branch from \"%s\"\n",
+		fmt.Fprintf(opts.IO.Out, "%s Synced the \"%s\" branch from %s to %s\n",
 			cs.SuccessIcon(),
-			destRepo.RepoOwner(),
-			branchName,
-			baseBranchLabel)
+			opts.Branch,
+			ghrepo.FullName(srcRepo),
+			ghrepo.FullName(destRepo))
 	}
 
 	return nil
@@ -223,12 +234,17 @@ func executeLocalRepoSync(srcRepo ghrepo.Interface, remote string, opts *SyncOpt
 	branch := opts.Branch
 	useForce := opts.Force
 
+	if err := git.Fetch(remote, fmt.Sprintf("refs/heads/%s", branch)); err != nil {
+		return err
+	}
+
 	hasLocalBranch := git.HasLocalBranch(branch)
 	if hasLocalBranch {
 		branchRemote, err := git.BranchRemote(branch)
 		if err != nil {
 			return err
 		}
+
 		if branchRemote != remote {
 			return mismatchRemotesError
 		}
@@ -241,6 +257,7 @@ func executeLocalRepoSync(srcRepo ghrepo.Interface, remote string, opts *SyncOpt
 		if !fastForward && !useForce {
 			return divergingError
 		}
+
 		if fastForward && useForce {
 			useForce = false
 		}
@@ -250,12 +267,14 @@ func executeLocalRepoSync(srcRepo ghrepo.Interface, remote string, opts *SyncOpt
 	if err != nil && !errors.Is(err, gitpkg.ErrNotOnAnyBranch) {
 		return err
 	}
+
 	if currentBranch == branch {
 		if isDirty, err := git.IsDirty(); err == nil && isDirty {
 			return fmt.Errorf("can't sync because there are local changes; please stash them before trying again")
 		} else if err != nil {
 			return err
 		}
+
 		if useForce {
 			if err := git.ResetHard("FETCH_HEAD"); err != nil {
 				return err
@@ -280,47 +299,20 @@ func executeLocalRepoSync(srcRepo ghrepo.Interface, remote string, opts *SyncOpt
 	return nil
 }
 
-func executeRemoteRepoSync(client *api.Client, destRepo, srcRepo ghrepo.Interface, opts *SyncOptions) (string, error) {
-	branchName := opts.Branch
-	if branchName == "" {
-		var err error
-		branchName, err = api.RepoDefaultBranch(client, destRepo)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	var apiErr upstreamMergeErr
-	if baseBranch, err := triggerUpstreamMerge(client, destRepo, branchName); err == nil {
-		return baseBranch, nil
-	} else if !errors.As(err, &apiErr) {
-		return "", err
-	}
-
-	if srcRepo == nil {
-		var err error
-		srcRepo, err = api.RepoParent(client, destRepo)
-		if err != nil {
-			return "", err
-		}
-		if srcRepo == nil {
-			return "", fmt.Errorf("can't determine source repository for %s because repository is not fork", ghrepo.FullName(destRepo))
-		}
-	}
-
-	commit, err := latestCommit(client, srcRepo, branchName)
+func executeRemoteRepoSync(client *api.Client, destRepo, srcRepo ghrepo.Interface, opts *SyncOptions) error {
+	commit, err := latestCommit(client, srcRepo, opts.Branch)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	// This is not a great way to detect the error returned by the API
 	// Unfortunately API returns 422 for multiple reasons
 	notFastForwardErrorMessage := regexp.MustCompile(`^Update is not a fast forward$`)
-	err = syncFork(client, destRepo, branchName, commit.Object.SHA, opts.Force)
+	err = syncFork(client, destRepo, opts.Branch, commit.Object.SHA, opts.Force)
 	var httpErr api.HTTPError
 	if err != nil && errors.As(err, &httpErr) && notFastForwardErrorMessage.MatchString(httpErr.Message) {
-		return "", divergingError
+		return divergingError
 	}
 
-	return fmt.Sprintf("%s:%s", srcRepo.RepoOwner(), branchName), nil
+	return err
 }

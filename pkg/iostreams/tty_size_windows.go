@@ -11,6 +11,7 @@ func ttySize() (int, int, error) {
 	if err != nil {
 		return -1, -1, err
 	}
+
 	defer f.Close()
 	return term.GetSize(int(f.Fd()))
 }

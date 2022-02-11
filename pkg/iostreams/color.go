@@ -3,8 +3,8 @@ package iostreams
 import (
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
+	"strconv"
 
 	"github.com/mgutz/ansi"
 )
@@ -49,11 +49,10 @@ func IsTrueColorSupported() bool {
 		strings.Contains(colorterm, "truecolor")
 }
 
-func NewColorScheme(enabled, is256enabled bool, trueColor bool) *ColorScheme {
+func NewColorScheme(enabled, is256enabled bool) *ColorScheme {
 	return &ColorScheme{
 		enabled:      enabled,
 		is256enabled: is256enabled,
-		hasTrueColor: trueColor,
 	}
 }
 
@@ -67,6 +66,7 @@ func (c *ColorScheme) Bold(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return bold(t)
 }
 
@@ -78,6 +78,7 @@ func (c *ColorScheme) Red(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return red(t)
 }
 
@@ -89,6 +90,7 @@ func (c *ColorScheme) Yellow(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return yellow(t)
 }
 
@@ -100,6 +102,7 @@ func (c *ColorScheme) Green(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return green(t)
 }
 
@@ -111,9 +114,11 @@ func (c *ColorScheme) Gray(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	if c.is256enabled {
 		return gray256(t)
 	}
+
 	return gray(t)
 }
 
@@ -125,6 +130,7 @@ func (c *ColorScheme) Magenta(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return magenta(t)
 }
 
@@ -136,6 +142,7 @@ func (c *ColorScheme) Cyan(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return cyan(t)
 }
 
@@ -147,6 +154,7 @@ func (c *ColorScheme) CyanBold(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return cyanBold(t)
 }
 
@@ -154,6 +162,7 @@ func (c *ColorScheme) Blue(t string) string {
 	if !c.enabled {
 		return t
 	}
+
 	return blue(t)
 }
 
@@ -184,27 +193,28 @@ func (c *ColorScheme) FailureIconWithColor(colo func(string) string) string {
 func (c *ColorScheme) ColorFromString(s string) func(string) string {
 	s = strings.ToLower(s)
 	var fn func(string) string
+
 	switch s {
-	case "bold":
-		fn = c.Bold
-	case "red":
-		fn = c.Red
-	case "yellow":
-		fn = c.Yellow
-	case "green":
-		fn = c.Green
-	case "gray":
-		fn = c.Gray
-	case "magenta":
-		fn = c.Magenta
-	case "cyan":
-		fn = c.Cyan
-	case "blue":
-		fn = c.Blue
-	default:
-		fn = func(s string) string {
-			return s
-		}
+		case "bold":
+			fn = c.Bold
+		case "red":
+			fn = c.Red
+		case "yellow":
+			fn = c.Yellow
+		case "green":
+			fn = c.Green
+		case "gray":
+			fn = c.Gray
+		case "magenta":
+			fn = c.Magenta
+		case "cyan":
+			fn = c.Cyan
+		case "blue":
+			fn = c.Blue
+		default:
+			fn = func(s string) string {
+				return s
+			}
 	}
 
 	return fn
@@ -218,5 +228,6 @@ func (c *ColorScheme) HexToRGB(hex string, x string) string {
 	r, _ := strconv.ParseInt(hex[0:2], 16, 64)
 	g, _ := strconv.ParseInt(hex[2:4], 16, 64)
 	b, _ := strconv.ParseInt(hex[4:6], 16, 64)
+
 	return fmt.Sprintf("\033[38;2;%d;%d;%dm%s\033[0m", r, g, b, x)
 }

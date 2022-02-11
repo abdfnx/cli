@@ -9,10 +9,10 @@ import (
 	"runtime"
 
 	"github.com/AlecAivazis/survey/v2"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/run"
-	"github.com/cli/cli/v2/pkg/cmd/ssh-key/add"
-	"github.com/cli/cli/v2/pkg/prompt"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/core/run"
+	"github.com/abdfnx/gh/pkg/cmd/ssh-key/add"
+	"github.com/abdfnx/gh/pkg/prompt"
 	"github.com/cli/safeexec"
 )
 
@@ -25,10 +25,12 @@ func (c *sshContext) sshDir() (string, error) {
 	if c.configDir != "" {
 		return c.configDir, nil
 	}
+
 	dir, err := config.HomeDirPath(".ssh")
 	if err == nil {
 		c.configDir = dir
 	}
+
 	return dir, err
 }
 
@@ -60,6 +62,7 @@ func (c *sshContext) findKeygen() (string, error) {
 	if err == nil {
 		c.keygenExe = keygenExe
 	}
+
 	return keygenExe, err
 }
 
@@ -75,9 +78,11 @@ func (c *sshContext) generateSSHKey() (string, error) {
 		Message: "Generate a new SSH key to add to your GitHub account?",
 		Default: true,
 	}, &sshChoice)
+
 	if err != nil {
 		return "", fmt.Errorf("could not prompt: %w", err)
 	}
+
 	if !sshChoice {
 		return "", nil
 	}
@@ -86,6 +91,7 @@ func (c *sshContext) generateSSHKey() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	keyFile := filepath.Join(sshDir, "id_ed25519")
 	if _, err := os.Stat(keyFile); err == nil {
 		return "", fmt.Errorf("refusing to overwrite file %s", keyFile)
@@ -100,6 +106,7 @@ func (c *sshContext) generateSSHKey() (string, error) {
 	err = prompt.SurveyAskOne(&survey.Password{
 		Message: "Enter a passphrase for your new SSH key (Optional)",
 	}, &sshPassphrase)
+
 	if err != nil {
 		return "", fmt.Errorf("could not prompt: %w", err)
 	}
@@ -113,6 +120,7 @@ func sshKeyUpload(httpClient *http.Client, hostname, keyFile string) error {
 	if err != nil {
 		return err
 	}
+
 	defer f.Close()
 
 	return add.SSHKeyUpload(httpClient, hostname, f, "GitHub CLI")

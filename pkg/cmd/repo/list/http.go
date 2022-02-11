@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/pkg/githubsearch"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/pkg/githubsearch"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -53,6 +53,7 @@ func listRepos(client *http.Client, hostname string, limit int, owner string, fi
 	}
 
 	inputs := []string{"$perPage:Int!", "$endCursor:String", "$privacy:RepositoryPrivacy", "$fork:Boolean"}
+
 	var ownerConnection string
 	if owner == "" {
 		ownerConnection = "repositoryOwner: viewer"
@@ -88,6 +89,7 @@ func listRepos(client *http.Client, hostname string, limit int, owner string, fi
 	}`, strings.Join(inputs, ","), ownerConnection, api.RepositoryGraphQL(filter.Fields))
 
 	apiClient := api.NewClientFromHTTP(client)
+
 	listResult := RepositoryList{}
 pagination:
 	for {
@@ -203,10 +205,10 @@ func searchQuery(owner string, filter FilterOptions) string {
 	}
 
 	switch filter.Visibility {
-	case "public":
-		q.SetVisibility(githubsearch.Public)
-	case "private":
-		q.SetVisibility(githubsearch.Private)
+		case "public":
+			q.SetVisibility(githubsearch.Public)
+		case "private":
+			q.SetVisibility(githubsearch.Private)
 	}
 
 	if filter.Archived {

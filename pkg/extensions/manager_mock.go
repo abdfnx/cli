@@ -4,7 +4,6 @@
 package extensions
 
 import (
-	"github.com/cli/cli/v2/internal/ghrepo"
 	"io"
 	"sync"
 )
@@ -19,25 +18,22 @@ var _ ExtensionManager = &ExtensionManagerMock{}
 //
 // 		// make and configure a mocked ExtensionManager
 // 		mockedExtensionManager := &ExtensionManagerMock{
-// 			CreateFunc: func(name string, tmplType ExtTemplateType) error {
-// 				panic("mock out the Create method")
-// 			},
 // 			DispatchFunc: func(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) (bool, error) {
 // 				panic("mock out the Dispatch method")
 // 			},
-// 			InstallFunc: func(interfaceMoqParam ghrepo.Interface) error {
+// 			InstallFunc: func(url string, stdout io.Writer, stderr io.Writer) error {
 // 				panic("mock out the Install method")
 // 			},
 // 			InstallLocalFunc: func(dir string) error {
 // 				panic("mock out the InstallLocal method")
 // 			},
-// 			ListFunc: func(includeMetadata bool) []Extension {
+// 			ListFunc: func() []Extension {
 // 				panic("mock out the List method")
 // 			},
 // 			RemoveFunc: func(name string) error {
 // 				panic("mock out the Remove method")
 // 			},
-// 			UpgradeFunc: func(name string, force bool) error {
+// 			UpgradeFunc: func(name string, stdout io.Writer, stderr io.Writer) error {
 // 				panic("mock out the Upgrade method")
 // 			},
 // 		}
@@ -47,36 +43,26 @@ var _ ExtensionManager = &ExtensionManagerMock{}
 //
 // 	}
 type ExtensionManagerMock struct {
-	// CreateFunc mocks the Create method.
-	CreateFunc func(name string, tmplType ExtTemplateType) error
-
 	// DispatchFunc mocks the Dispatch method.
 	DispatchFunc func(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) (bool, error)
 
 	// InstallFunc mocks the Install method.
-	InstallFunc func(interfaceMoqParam ghrepo.Interface) error
+	InstallFunc func(url string, stdout io.Writer, stderr io.Writer) error
 
 	// InstallLocalFunc mocks the InstallLocal method.
 	InstallLocalFunc func(dir string) error
 
 	// ListFunc mocks the List method.
-	ListFunc func(includeMetadata bool) []Extension
+	ListFunc func() []Extension
 
 	// RemoveFunc mocks the Remove method.
 	RemoveFunc func(name string) error
 
 	// UpgradeFunc mocks the Upgrade method.
-	UpgradeFunc func(name string, force bool) error
+	UpgradeFunc func(name string, stdout io.Writer, stderr io.Writer) error
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// Create holds details about calls to the Create method.
-		Create []struct {
-			// Name is the name argument value.
-			Name string
-			// TmplType is the tmplType argument value.
-			TmplType ExtTemplateType
-		}
 		// Dispatch holds details about calls to the Dispatch method.
 		Dispatch []struct {
 			// Args is the args argument value.
@@ -90,8 +76,12 @@ type ExtensionManagerMock struct {
 		}
 		// Install holds details about calls to the Install method.
 		Install []struct {
-			// InterfaceMoqParam is the interfaceMoqParam argument value.
-			InterfaceMoqParam ghrepo.Interface
+			// URL is the url argument value.
+			URL string
+			// Stdout is the stdout argument value.
+			Stdout io.Writer
+			// Stderr is the stderr argument value.
+			Stderr io.Writer
 		}
 		// InstallLocal holds details about calls to the InstallLocal method.
 		InstallLocal []struct {
@@ -100,8 +90,6 @@ type ExtensionManagerMock struct {
 		}
 		// List holds details about calls to the List method.
 		List []struct {
-			// IncludeMetadata is the includeMetadata argument value.
-			IncludeMetadata bool
 		}
 		// Remove holds details about calls to the Remove method.
 		Remove []struct {
@@ -112,11 +100,13 @@ type ExtensionManagerMock struct {
 		Upgrade []struct {
 			// Name is the name argument value.
 			Name string
-			// Force is the force argument value.
-			Force bool
+			// Stdout is the stdout argument value.
+			Stdout io.Writer
+			// Stderr is the stderr argument value.
+			Stderr io.Writer
 		}
 	}
-	lockCreate       sync.RWMutex
+
 	lockDispatch     sync.RWMutex
 	lockInstall      sync.RWMutex
 	lockInstallLocal sync.RWMutex
@@ -125,46 +115,12 @@ type ExtensionManagerMock struct {
 	lockUpgrade      sync.RWMutex
 }
 
-// Create calls CreateFunc.
-func (mock *ExtensionManagerMock) Create(name string, tmplType ExtTemplateType) error {
-	if mock.CreateFunc == nil {
-		panic("ExtensionManagerMock.CreateFunc: method is nil but ExtensionManager.Create was just called")
-	}
-	callInfo := struct {
-		Name     string
-		TmplType ExtTemplateType
-	}{
-		Name:     name,
-		TmplType: tmplType,
-	}
-	mock.lockCreate.Lock()
-	mock.calls.Create = append(mock.calls.Create, callInfo)
-	mock.lockCreate.Unlock()
-	return mock.CreateFunc(name, tmplType)
-}
-
-// CreateCalls gets all the calls that were made to Create.
-// Check the length with:
-//     len(mockedExtensionManager.CreateCalls())
-func (mock *ExtensionManagerMock) CreateCalls() []struct {
-	Name     string
-	TmplType ExtTemplateType
-} {
-	var calls []struct {
-		Name     string
-		TmplType ExtTemplateType
-	}
-	mock.lockCreate.RLock()
-	calls = mock.calls.Create
-	mock.lockCreate.RUnlock()
-	return calls
-}
-
 // Dispatch calls DispatchFunc.
 func (mock *ExtensionManagerMock) Dispatch(args []string, stdin io.Reader, stdout io.Writer, stderr io.Writer) (bool, error) {
 	if mock.DispatchFunc == nil {
 		panic("ExtensionManagerMock.DispatchFunc: method is nil but ExtensionManager.Dispatch was just called")
 	}
+
 	callInfo := struct {
 		Args   []string
 		Stdin  io.Reader
@@ -176,9 +132,11 @@ func (mock *ExtensionManagerMock) Dispatch(args []string, stdin io.Reader, stdou
 		Stdout: stdout,
 		Stderr: stderr,
 	}
+
 	mock.lockDispatch.Lock()
 	mock.calls.Dispatch = append(mock.calls.Dispatch, callInfo)
 	mock.lockDispatch.Unlock()
+
 	return mock.DispatchFunc(args, stdin, stdout, stderr)
 }
 
@@ -197,40 +155,55 @@ func (mock *ExtensionManagerMock) DispatchCalls() []struct {
 		Stdout io.Writer
 		Stderr io.Writer
 	}
+
 	mock.lockDispatch.RLock()
 	calls = mock.calls.Dispatch
 	mock.lockDispatch.RUnlock()
+
 	return calls
 }
 
 // Install calls InstallFunc.
-func (mock *ExtensionManagerMock) Install(interfaceMoqParam ghrepo.Interface) error {
+func (mock *ExtensionManagerMock) Install(url string, stdout io.Writer, stderr io.Writer) error {
 	if mock.InstallFunc == nil {
 		panic("ExtensionManagerMock.InstallFunc: method is nil but ExtensionManager.Install was just called")
 	}
+
 	callInfo := struct {
-		InterfaceMoqParam ghrepo.Interface
+		URL    string
+		Stdout io.Writer
+		Stderr io.Writer
 	}{
-		InterfaceMoqParam: interfaceMoqParam,
+		URL:    url,
+		Stdout: stdout,
+		Stderr: stderr,
 	}
+
 	mock.lockInstall.Lock()
 	mock.calls.Install = append(mock.calls.Install, callInfo)
 	mock.lockInstall.Unlock()
-	return mock.InstallFunc(interfaceMoqParam)
+
+	return mock.InstallFunc(url, stdout, stderr)
 }
 
 // InstallCalls gets all the calls that were made to Install.
 // Check the length with:
 //     len(mockedExtensionManager.InstallCalls())
 func (mock *ExtensionManagerMock) InstallCalls() []struct {
-	InterfaceMoqParam ghrepo.Interface
+	URL    string
+	Stdout io.Writer
+	Stderr io.Writer
 } {
 	var calls []struct {
-		InterfaceMoqParam ghrepo.Interface
+		URL    string
+		Stdout io.Writer
+		Stderr io.Writer
 	}
+
 	mock.lockInstall.RLock()
 	calls = mock.calls.Install
 	mock.lockInstall.RUnlock()
+
 	return calls
 }
 
@@ -239,14 +212,17 @@ func (mock *ExtensionManagerMock) InstallLocal(dir string) error {
 	if mock.InstallLocalFunc == nil {
 		panic("ExtensionManagerMock.InstallLocalFunc: method is nil but ExtensionManager.InstallLocal was just called")
 	}
+
 	callInfo := struct {
 		Dir string
 	}{
 		Dir: dir,
 	}
+
 	mock.lockInstallLocal.Lock()
 	mock.calls.InstallLocal = append(mock.calls.InstallLocal, callInfo)
 	mock.lockInstallLocal.Unlock()
+
 	return mock.InstallLocalFunc(dir)
 }
 
@@ -259,40 +235,39 @@ func (mock *ExtensionManagerMock) InstallLocalCalls() []struct {
 	var calls []struct {
 		Dir string
 	}
+
 	mock.lockInstallLocal.RLock()
 	calls = mock.calls.InstallLocal
 	mock.lockInstallLocal.RUnlock()
+
 	return calls
 }
 
 // List calls ListFunc.
-func (mock *ExtensionManagerMock) List(includeMetadata bool) []Extension {
+func (mock *ExtensionManagerMock) List() []Extension {
 	if mock.ListFunc == nil {
 		panic("ExtensionManagerMock.ListFunc: method is nil but ExtensionManager.List was just called")
 	}
-	callInfo := struct {
-		IncludeMetadata bool
-	}{
-		IncludeMetadata: includeMetadata,
-	}
+
+	callInfo := struct {}{}
+
 	mock.lockList.Lock()
 	mock.calls.List = append(mock.calls.List, callInfo)
 	mock.lockList.Unlock()
-	return mock.ListFunc(includeMetadata)
+
+	return mock.ListFunc()
 }
 
 // ListCalls gets all the calls that were made to List.
 // Check the length with:
 //     len(mockedExtensionManager.ListCalls())
-func (mock *ExtensionManagerMock) ListCalls() []struct {
-	IncludeMetadata bool
-} {
-	var calls []struct {
-		IncludeMetadata bool
-	}
+func (mock *ExtensionManagerMock) ListCalls() []struct {} {
+	var calls []struct {}
+
 	mock.lockList.RLock()
 	calls = mock.calls.List
 	mock.lockList.RUnlock()
+
 	return calls
 }
 
@@ -301,14 +276,17 @@ func (mock *ExtensionManagerMock) Remove(name string) error {
 	if mock.RemoveFunc == nil {
 		panic("ExtensionManagerMock.RemoveFunc: method is nil but ExtensionManager.Remove was just called")
 	}
+
 	callInfo := struct {
 		Name string
 	}{
 		Name: name,
 	}
+
 	mock.lockRemove.Lock()
 	mock.calls.Remove = append(mock.calls.Remove, callInfo)
 	mock.lockRemove.Unlock()
+
 	return mock.RemoveFunc(name)
 }
 
@@ -321,43 +299,54 @@ func (mock *ExtensionManagerMock) RemoveCalls() []struct {
 	var calls []struct {
 		Name string
 	}
+
 	mock.lockRemove.RLock()
 	calls = mock.calls.Remove
 	mock.lockRemove.RUnlock()
+
 	return calls
 }
 
 // Upgrade calls UpgradeFunc.
-func (mock *ExtensionManagerMock) Upgrade(name string, force bool) error {
+func (mock *ExtensionManagerMock) Upgrade(name string, stdout io.Writer, stderr io.Writer) error {
 	if mock.UpgradeFunc == nil {
 		panic("ExtensionManagerMock.UpgradeFunc: method is nil but ExtensionManager.Upgrade was just called")
 	}
+
 	callInfo := struct {
-		Name  string
-		Force bool
+		Name   string
+		Stdout io.Writer
+		Stderr io.Writer
 	}{
-		Name:  name,
-		Force: force,
+		Name:   name,
+		Stdout: stdout,
+		Stderr: stderr,
 	}
+
 	mock.lockUpgrade.Lock()
 	mock.calls.Upgrade = append(mock.calls.Upgrade, callInfo)
 	mock.lockUpgrade.Unlock()
-	return mock.UpgradeFunc(name, force)
+
+	return mock.UpgradeFunc(name, stdout, stderr)
 }
 
 // UpgradeCalls gets all the calls that were made to Upgrade.
 // Check the length with:
 //     len(mockedExtensionManager.UpgradeCalls())
 func (mock *ExtensionManagerMock) UpgradeCalls() []struct {
-	Name  string
-	Force bool
+	Name   string
+	Stdout io.Writer
+	Stderr io.Writer
 } {
 	var calls []struct {
-		Name  string
-		Force bool
+		Name   string
+		Stdout io.Writer
+		Stderr io.Writer
 	}
+
 	mock.lockUpgrade.RLock()
 	calls = mock.calls.Upgrade
 	mock.lockUpgrade.RUnlock()
+
 	return calls
 }

@@ -5,14 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/cli/cli/v2/internal/ghinstance"
 	"io"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/abdfnx/gh/core/ghrepo"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -51,9 +50,11 @@ type Repository struct {
 	Watchers       struct {
 		TotalCount int `json:"totalCount"`
 	}
+
 	Issues struct {
 		TotalCount int `json:"totalCount"`
 	}
+
 	PullRequests struct {
 		TotalCount int `json:"totalCount"`
 	}
@@ -98,9 +99,9 @@ type Repository struct {
 	Labels               struct {
 		Nodes []IssueLabel
 	}
-	Milestones struct {
-		Nodes []Milestone
-	}
+	// Milestones struct {
+	// 	Nodes []Milestone
+	// }
 	LatestRelease *RepositoryRelease
 
 	AssignableUsers struct {
@@ -231,36 +232,6 @@ func (r Repository) ViewerCanTriage() bool {
 	}
 }
 
-func FetchRepository(client *Client, repo ghrepo.Interface, fields []string) (*Repository, error) {
-	query := fmt.Sprintf(`query RepositoryInfo($owner: String!, $name: String!) {
-		repository(owner: $owner, name: $name) {%s}
-	}`, RepositoryGraphQL(fields))
-
-	variables := map[string]interface{}{
-		"owner": repo.RepoOwner(),
-		"name":  repo.RepoName(),
-	}
-
-	var result struct {
-		Repository *Repository
-	}
-	if err := client.GraphQL(repo.RepoHost(), query, variables, &result); err != nil {
-		return nil, err
-	}
-	// The GraphQL API should have returned an error in case of a missing repository, but this isn't
-	// guaranteed to happen when an authentication token with insufficient permissions is being used.
-	if result.Repository == nil {
-		return nil, GraphQLErrorResponse{
-			Errors: []GraphQLError{{
-				Type:    "NOT_FOUND",
-				Message: fmt.Sprintf("Could not resolve to a Repository with the name '%s/%s'.", repo.RepoOwner(), repo.RepoName()),
-			}},
-		}
-	}
-
-	return InitRepoHostname(result.Repository, repo.RepoHost()), nil
-}
-
 func GitHubRepo(client *Client, repo ghrepo.Interface) (*Repository, error) {
 	query := `
 	fragment repo on Repository {
@@ -292,24 +263,16 @@ func GitHubRepo(client *Client, repo ghrepo.Interface) (*Repository, error) {
 		"name":  repo.RepoName(),
 	}
 
-	var result struct {
-		Repository *Repository
-	}
-	if err := client.GraphQL(repo.RepoHost(), query, variables, &result); err != nil {
+	result := struct {
+		Repository Repository
+	}{}
+
+	err := client.GraphQL(repo.RepoHost(), query, variables, &result)
+	if err != nil {
 		return nil, err
 	}
-	// The GraphQL API should have returned an error in case of a missing repository, but this isn't
-	// guaranteed to happen when an authentication token with insufficient permissions is being used.
-	if result.Repository == nil {
-		return nil, GraphQLErrorResponse{
-			Errors: []GraphQLError{{
-				Type:    "NOT_FOUND",
-				Message: fmt.Sprintf("Could not resolve to a Repository with the name '%s/%s'.", repo.RepoOwner(), repo.RepoName()),
-			}},
-		}
-	}
 
-	return InitRepoHostname(result.Repository, repo.RepoHost()), nil
+	return InitRepoHostname(&result.Repository, repo.RepoHost()), nil
 }
 
 func RepoDefaultBranch(client *Client, repo ghrepo.Interface) (string, error) {
@@ -321,6 +284,7 @@ func RepoDefaultBranch(client *Client, repo ghrepo.Interface) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return r.DefaultBranchRef.Name, nil
 }
 
@@ -334,6 +298,7 @@ func CanPushToRepo(httpClient *http.Client, repo ghrepo.Interface) (bool, error)
 	if err != nil {
 		return false, err
 	}
+
 	return r.ViewerCanPush(), nil
 }
 
@@ -360,11 +325,13 @@ func RepoParent(client *Client, repo ghrepo.Interface) (ghrepo.Interface, error)
 	if err != nil {
 		return nil, err
 	}
+
 	if query.Repository.Parent == nil {
 		return nil, nil
 	}
 
 	parent := ghrepo.NewWithHost(query.Repository.Parent.Owner.Login, query.Repository.Parent.Name, repo.RepoHost())
+
 	return parent, nil
 }
 
@@ -425,10 +392,12 @@ func RepoNetwork(client *Client, repos []ghrepo.Interface) (RepoNetworkResult, e
 				tolerated = false
 			}
 		}
+
 		if tolerated {
 			err = nil
 		}
 	}
+
 	if err != nil {
 		return result, err
 	}
@@ -437,9 +406,9 @@ func RepoNetwork(client *Client, repos []ghrepo.Interface) (RepoNetworkResult, e
 	for key := range graphqlResult {
 		keys = append(keys, key)
 	}
+
 	// sort keys to ensure `repo_{N}` entries are processed in order
 	sort.Strings(keys)
-
 	// Iterate over keys of GraphQL response data and, based on its name,
 	// dynamically allocate the target struct an individual message gets decoded to.
 	for _, name := range keys {
@@ -448,26 +417,31 @@ func RepoNetwork(client *Client, repos []ghrepo.Interface) (RepoNetworkResult, e
 			viewerResult := struct {
 				Login string
 			}{}
+
 			decoder := json.NewDecoder(bytes.NewReader([]byte(*jsonMessage)))
 			if err := decoder.Decode(&viewerResult); err != nil {
 				return result, err
 			}
+
 			result.ViewerLogin = viewerResult.Login
 		} else if strings.HasPrefix(name, "repo_") {
 			if jsonMessage == nil {
 				result.Repositories = append(result.Repositories, nil)
 				continue
 			}
+
 			var repo Repository
 			decoder := json.NewDecoder(bytes.NewReader(*jsonMessage))
 			if err := decoder.Decode(&repo); err != nil {
 				return result, err
 			}
+
 			result.Repositories = append(result.Repositories, InitRepoHostname(&repo, hostname))
 		} else {
 			return result, fmt.Errorf("unknown GraphQL result key %q", name)
 		}
 	}
+
 	return result, nil
 }
 
@@ -476,10 +450,11 @@ func InitRepoHostname(repo *Repository, hostname string) *Repository {
 	if repo.Parent != nil {
 		repo.Parent.hostname = hostname
 	}
+
 	return repo
 }
 
-// RepositoryV3 is the repository result from GitHub API v3
+// repositoryV3 is the repository result from GitHub API v3
 type repositoryV3 struct {
 	NodeID    string `json:"node_id"`
 	Name      string
@@ -487,9 +462,9 @@ type repositoryV3 struct {
 	Owner     struct {
 		Login string
 	}
-	Private bool
-	HTMLUrl string `json:"html_url"`
-	Parent  *repositoryV3
+	Private  bool
+	HTMLUrl  string `json:"html_url"`
+	Parent   *repositoryV3
 }
 
 // ForkRepo forks the repository on GitHub and returns the new repository
@@ -523,57 +498,6 @@ func ForkRepo(client *Client, repo ghrepo.Interface, org string) (*Repository, e
 		ViewerPermission: "WRITE",
 		hostname:         repo.RepoHost(),
 	}, nil
-}
-
-// RenameRepo renames the repository on GitHub and returns the renamed repository
-func RenameRepo(client *Client, repo ghrepo.Interface, newRepoName string) (*Repository, error) {
-	input := map[string]string{"name": newRepoName}
-	body := &bytes.Buffer{}
-	enc := json.NewEncoder(body)
-	if err := enc.Encode(input); err != nil {
-		return nil, err
-	}
-
-	path := fmt.Sprintf("%srepos/%s",
-		ghinstance.RESTPrefix(repo.RepoHost()),
-		ghrepo.FullName(repo))
-
-	result := repositoryV3{}
-	err := client.REST(repo.RepoHost(), "PATCH", path, body, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Repository{
-		ID:        result.NodeID,
-		Name:      result.Name,
-		CreatedAt: result.CreatedAt,
-		Owner: RepositoryOwner{
-			Login: result.Owner.Login,
-		},
-		ViewerPermission: "WRITE",
-		hostname:         repo.RepoHost(),
-	}, nil
-}
-
-func LastCommit(client *Client, repo ghrepo.Interface) (*Commit, error) {
-	var responseData struct {
-		Repository struct {
-			DefaultBranchRef struct {
-				Target struct {
-					Commit `graphql:"... on Commit"`
-				}
-			}
-		} `graphql:"repository(owner: $owner, name: $repo)"`
-	}
-	variables := map[string]interface{}{
-		"owner": githubv4.String(repo.RepoOwner()), "repo": githubv4.String(repo.RepoName()),
-	}
-	gql := graphQLClient(client.http, repo.RepoHost())
-	if err := gql.QueryNamed(context.Background(), "LastCommit", &responseData, variables); err != nil {
-		return nil, err
-	}
-	return &responseData.Repository.DefaultBranchRef.Target.Commit, nil
 }
 
 // RepoFindForks finds forks of the repo that are affiliated with the viewer
@@ -618,6 +542,7 @@ func RepoFindForks(client *Client, repo ghrepo.Interface, limit int) ([]*Reposit
 		if !r.ViewerCanPush() {
 			continue
 		}
+
 		results = append(results, InitRepoHostname(&r, repo.RepoHost()))
 	}
 
@@ -643,10 +568,12 @@ func (m *RepoMetadataResult) MembersToIDs(names []string) ([]string, error) {
 				break
 			}
 		}
+
 		if !found {
 			return nil, fmt.Errorf("'%s' not found", assigneeLogin)
 		}
 	}
+
 	return ids, nil
 }
 
@@ -662,10 +589,12 @@ func (m *RepoMetadataResult) TeamsToIDs(names []string) ([]string, error) {
 				break
 			}
 		}
+
 		if !found {
 			return nil, fmt.Errorf("'%s' not found", teamSlug)
 		}
 	}
+
 	return ids, nil
 }
 
@@ -680,10 +609,12 @@ func (m *RepoMetadataResult) LabelsToIDs(names []string) ([]string, error) {
 				break
 			}
 		}
+
 		if !found {
 			return nil, fmt.Errorf("'%s' not found", labelName)
 		}
 	}
+
 	return ids, nil
 }
 
@@ -698,10 +629,12 @@ func (m *RepoMetadataResult) ProjectsToIDs(names []string) ([]string, error) {
 				break
 			}
 		}
+
 		if !found {
 			return nil, fmt.Errorf("'%s' not found", projectName)
 		}
 	}
+
 	return ids, nil
 }
 
@@ -725,10 +658,12 @@ func ProjectsToPaths(projects []RepoProject, names []string) ([]string, error) {
 				break
 			}
 		}
+
 		if !found {
 			return nil, fmt.Errorf("'%s' not found", projectName)
 		}
 	}
+
 	return paths, nil
 }
 
@@ -788,12 +723,13 @@ func RepoMetadata(client *Client, repo ghrepo.Interface, input RepoMetadataInput
 			errc <- err
 		}()
 	}
+
 	if input.Reviewers {
 		count++
 		go func() {
 			teams, err := OrganizationTeams(client, repo)
 			// TODO: better detection of non-org repos
-			if err != nil && !strings.Contains(err.Error(), "Could not resolve to an Organization") {
+			if err != nil && !strings.HasPrefix(err.Error(), "Could not resolve to an Organization") {
 				errc <- fmt.Errorf("error fetching organization teams: %w", err)
 				return
 			}
@@ -801,6 +737,7 @@ func RepoMetadata(client *Client, repo ghrepo.Interface, input RepoMetadataInput
 			errc <- nil
 		}()
 	}
+
 	if input.Labels {
 		count++
 		go func() {
@@ -812,6 +749,7 @@ func RepoMetadata(client *Client, repo ghrepo.Interface, input RepoMetadataInput
 			errc <- err
 		}()
 	}
+
 	if input.Projects {
 		count++
 		go func() {
@@ -824,6 +762,7 @@ func RepoMetadata(client *Client, repo ghrepo.Interface, input RepoMetadataInput
 			errc <- nil
 		}()
 	}
+
 	if input.Milestones {
 		count++
 		go func() {
@@ -880,10 +819,12 @@ func RepoResolveMetadataIDs(client *Client, repo ghrepo.Interface, input RepoRes
 		Projects:   len(input.Projects) > 0,
 		Milestones: len(input.Milestones) > 0,
 	}
+
 	result, err := RepoMetadata(client, repo, mi)
 	if err != nil {
 		return result, err
 	}
+
 	if len(users) == 0 && len(teams) == 0 && len(input.Labels) == 0 {
 		return result, nil
 	}
@@ -893,20 +834,25 @@ func RepoResolveMetadataIDs(client *Client, repo ghrepo.Interface, input RepoRes
 	for i, u := range users {
 		fmt.Fprintf(query, "u%03d: user(login:%q){id,login}\n", i, u)
 	}
+
 	if len(input.Labels) > 0 {
 		fmt.Fprintf(query, "repository(owner:%q,name:%q){\n", repo.RepoOwner(), repo.RepoName())
 		for i, l := range input.Labels {
 			fmt.Fprintf(query, "l%03d: label(name:%q){id,name}\n", i, l)
 		}
+
 		fmt.Fprint(query, "}\n")
 	}
+
 	if len(teams) > 0 {
 		fmt.Fprintf(query, "organization(login:%q){\n", repo.RepoOwner())
 		for i, t := range teams {
 			fmt.Fprintf(query, "t%03d: team(slug:%q){id,slug}\n", i, t)
 		}
+
 		fmt.Fprint(query, "}\n")
 	}
+
 	fmt.Fprint(query, "}\n")
 
 	response := make(map[string]json.RawMessage)
@@ -923,6 +869,7 @@ func RepoResolveMetadataIDs(client *Client, repo ghrepo.Interface, input RepoRes
 			if err != nil {
 				return result, err
 			}
+
 			for _, l := range repoResponse {
 				result.Labels = append(result.Labels, l)
 			}
@@ -932,6 +879,7 @@ func RepoResolveMetadataIDs(client *Client, repo ghrepo.Interface, input RepoRes
 			if err != nil {
 				return result, err
 			}
+
 			for _, t := range orgResponse {
 				result.Teams = append(result.Teams, t)
 			}
@@ -1004,7 +952,7 @@ func RepoAndOrgProjects(client *Client, repo ghrepo.Interface) ([]RepoProject, e
 
 	orgProjects, err := OrganizationProjects(client, repo)
 	// TODO: better detection of non-org repos
-	if err != nil && !strings.Contains(err.Error(), "Could not resolve to an Organization") {
+	if err != nil && !strings.HasPrefix(err.Error(), "Could not resolve to an Organization") {
 		return projects, fmt.Errorf("error fetching organization projects: %w", err)
 	}
 	projects = append(projects, orgProjects...)
@@ -1015,15 +963,6 @@ func RepoAndOrgProjects(client *Client, repo ghrepo.Interface) ([]RepoProject, e
 type RepoAssignee struct {
 	ID    string
 	Login string
-	Name  string
-}
-
-// DisplayName returns a formatted string that uses Login and Name to be displayed e.g. 'Login (Name)' or 'Login'
-func (ra RepoAssignee) DisplayName() string {
-	if ra.Name != "" {
-		return fmt.Sprintf("%s (%s)", ra.Login, ra.Name)
-	}
-	return ra.Login
 }
 
 // RepoAssignableUsers fetches all the assignable users for a repository
@@ -1094,6 +1033,7 @@ func RepoLabels(client *Client, repo ghrepo.Interface) ([]RepoLabel, error) {
 	gql := graphQLClient(client.http, repo.RepoHost())
 
 	var labels []RepoLabel
+
 	for {
 		var query responseData
 		err := gql.QueryNamed(context.Background(), "RepositoryLabelList", &query, variables)
@@ -1102,9 +1042,11 @@ func RepoLabels(client *Client, repo ghrepo.Interface) ([]RepoLabel, error) {
 		}
 
 		labels = append(labels, query.Repository.Labels.Nodes...)
+
 		if !query.Repository.Labels.PageInfo.HasNextPage {
 			break
 		}
+
 		variables["endCursor"] = githubv4.String(query.Repository.Labels.PageInfo.EndCursor)
 	}
 
@@ -1163,10 +1105,52 @@ func RepoMilestones(client *Client, repo ghrepo.Interface, state string) ([]Repo
 		if !query.Repository.Milestones.PageInfo.HasNextPage {
 			break
 		}
+
 		variables["endCursor"] = githubv4.String(query.Repository.Milestones.PageInfo.EndCursor)
 	}
 
 	return milestones, nil
+}
+
+func MilestoneByTitle(client *Client, repo ghrepo.Interface, state, title string) (*RepoMilestone, error) {
+	milestones, err := RepoMilestones(client, repo, state)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range milestones {
+		if strings.EqualFold(milestones[i].Title, title) {
+			return &milestones[i], nil
+		}
+	}
+	return nil, fmt.Errorf("no milestone found with title %q", title)
+}
+
+func MilestoneByNumber(client *Client, repo ghrepo.Interface, number int32) (*RepoMilestone, error) {
+	var query struct {
+		Repository struct {
+			Milestone *RepoMilestone `graphql:"milestone(number: $number)"`
+		} `graphql:"repository(owner: $owner, name: $name)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner":  githubv4.String(repo.RepoOwner()),
+		"name":   githubv4.String(repo.RepoName()),
+		"number": githubv4.Int(number),
+	}
+
+	gql := graphQLClient(client.http, repo.RepoHost())
+
+	err := gql.QueryNamed(context.Background(), "RepositoryMilestoneByNumber", &query, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	if query.Repository.Milestone == nil {
+		return nil, fmt.Errorf("no milestone found with number '%d'", number)
+	}
+
+	return query.Repository.Milestone, nil
 }
 
 func ProjectNamesToPaths(client *Client, repo ghrepo.Interface, projectNames []string) ([]string, error) {
@@ -1175,6 +1159,7 @@ func ProjectNamesToPaths(client *Client, repo ghrepo.Interface, projectNames []s
 	if err != nil {
 		return paths, err
 	}
+
 	return ProjectsToPaths(projects, projectNames)
 }
 

@@ -15,8 +15,8 @@ type showable interface {
 	Show()
 }
 
-func Edit(editorCommand, fn, initialValue string, stdin io.Reader, stdout io.Writer, stderr io.Writer) (string, error) {
-	return edit(editorCommand, fn, initialValue, stdin, stdout, stderr, nil, defaultLookPath)
+func Edit(editorCommand, fn, initialValue string, stdin io.Reader, stdout io.Writer, stderr io.Writer, cursor showable) (string, error) {
+	return edit(editorCommand, fn, initialValue, stdin, stdout, stderr, cursor, defaultLookPath)
 }
 
 func defaultLookPath(name string) ([]string, []string, error) {
@@ -33,10 +33,12 @@ func edit(editorCommand, fn, initialValue string, stdin io.Reader, stdout io.Wri
 	if pattern == "" {
 		pattern = "survey*.txt"
 	}
+
 	f, err := ioutil.TempFile("", pattern)
 	if err != nil {
 		return "", err
 	}
+
 	defer os.Remove(f.Name())
 
 	// write utf8 BOM header
@@ -62,16 +64,19 @@ func edit(editorCommand, fn, initialValue string, stdin io.Reader, stdout io.Wri
 	if editorCommand == "" {
 		editorCommand = defaultEditor
 	}
+
 	args, err := shellquote.Split(editorCommand)
 	if err != nil {
 		return "", err
 	}
+
 	args = append(args, f.Name())
 
 	editorExe, env, err := lookPath(args[0])
 	if err != nil {
 		return "", err
 	}
+
 	args = append(editorExe, args[1:]...)
 
 	cmd := exec.Command(args[0], args[1:]...)

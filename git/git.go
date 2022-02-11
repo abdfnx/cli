@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/run"
+	"github.com/abdfnx/gh/core/run"
 	"github.com/cli/safeexec"
 )
 
@@ -43,6 +43,7 @@ func ShowRefs(ref ...string) ([]Ref, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	output, err := run.PrepareCmd(showRef).Output()
 
 	var refs []Ref
@@ -84,20 +85,12 @@ func CurrentBranch() (string, error) {
 	return "", fmt.Errorf("%sgit: %s", stderr.String(), err)
 }
 
-func listRemotesForPath(path string) ([]string, error) {
-	remoteCmd, err := GitCommand("-C", path, "remote", "-v")
-	if err != nil {
-		return nil, err
-	}
-	output, err := run.PrepareCmd(remoteCmd).Output()
-	return outputLines(output), err
-}
-
 func listRemotes() ([]string, error) {
 	remoteCmd, err := GitCommand("remote", "-v")
 	if err != nil {
 		return nil, err
 	}
+
 	output, err := run.PrepareCmd(remoteCmd).Output()
 	return outputLines(output), err
 }
@@ -107,13 +100,13 @@ func Config(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	output, err := run.PrepareCmd(configCmd).Output()
 	if err != nil {
 		return "", fmt.Errorf("unknown config key: %s", name)
 	}
 
 	return firstLine(output), nil
-
 }
 
 type NotInstalled struct {
@@ -133,13 +126,16 @@ func GitCommand(args ...string) (*exec.Cmd, error) {
 			if runtime.GOOS == "windows" {
 				programName = "Git for Windows"
 			}
+
 			return nil, &NotInstalled{
 				message: fmt.Sprintf("unable to find git executable in PATH; please install %s before retrying", programName),
 				error:   err,
 			}
 		}
+
 		return nil, err
 	}
+
 	return exec.Command(gitExe, args...), nil
 }
 
@@ -178,6 +174,7 @@ func Commits(baseRef, headRef string) ([]*Commit, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	output, err := run.PrepareCmd(logCmd).Output()
 	if err != nil {
 		return []*Commit{}, err
@@ -191,6 +188,7 @@ func Commits(baseRef, headRef string) ([]*Commit, error) {
 		if len(split) != 2 {
 			continue
 		}
+
 		commits = append(commits, &Commit{
 			Sha:   split[sha],
 			Title: split[title],
@@ -209,6 +207,7 @@ func lookupCommit(sha, format string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return run.PrepareCmd(logCmd).Output()
 }
 
@@ -236,6 +235,7 @@ func Push(remote string, ref string, cmdOut, cmdErr io.Writer) error {
 	if err != nil {
 		return err
 	}
+
 	pushCmd.Stdout = cmdOut
 	pushCmd.Stderr = cmdErr
 	return run.PrepareCmd(pushCmd).Run()
@@ -254,31 +254,35 @@ func ReadBranchConfig(branch string) (cfg BranchConfig) {
 	if err != nil {
 		return
 	}
+
 	output, err := run.PrepareCmd(configCmd).Output()
 	if err != nil {
 		return
 	}
+
 	for _, line := range outputLines(output) {
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) < 2 {
 			continue
 		}
+
 		keys := strings.Split(parts[0], ".")
 		switch keys[len(keys)-1] {
-		case "remote":
-			if strings.Contains(parts[1], ":") {
-				u, err := ParseURL(parts[1])
-				if err != nil {
-					continue
+			case "remote":
+				if strings.Contains(parts[1], ":") {
+					u, err := ParseURL(parts[1])
+					if err != nil {
+						continue
+					}
+					cfg.RemoteURL = u
+				} else if !isFilesystemPath(parts[1]) {
+					cfg.RemoteName = parts[1]
 				}
-				cfg.RemoteURL = u
-			} else if !isFilesystemPath(parts[1]) {
-				cfg.RemoteName = parts[1]
-			}
-		case "merge":
-			cfg.MergeRef = parts[1]
+			case "merge":
+				cfg.MergeRef = parts[1]
 		}
 	}
+
 	return
 }
 
@@ -287,6 +291,7 @@ func DeleteLocalBranch(branch string) error {
 	if err != nil {
 		return err
 	}
+
 	return run.PrepareCmd(branchCmd).Run()
 }
 
@@ -295,6 +300,7 @@ func HasLocalBranch(branch string) bool {
 	if err != nil {
 		return false
 	}
+
 	_, err = run.PrepareCmd(configCmd).Output()
 	return err == nil
 }
@@ -304,20 +310,8 @@ func CheckoutBranch(branch string) error {
 	if err != nil {
 		return err
 	}
+
 	return run.PrepareCmd(configCmd).Run()
-}
-
-// pull changes from remote branch without version history
-func Pull(remote, branch string) error {
-	pullCmd, err := GitCommand("pull", "--ff-only", remote, branch)
-	if err != nil {
-		return err
-	}
-
-	pullCmd.Stdout = os.Stdout
-	pullCmd.Stderr = os.Stderr
-	pullCmd.Stdin = os.Stdin
-	return run.PrepareCmd(pullCmd).Run()
 }
 
 func parseCloneArgs(extraArgs []string) (args []string, target string) {
@@ -328,6 +322,7 @@ func parseCloneArgs(extraArgs []string) (args []string, target string) {
 			target, args = args[0], args[1:]
 		}
 	}
+
 	return
 }
 
@@ -350,6 +345,7 @@ func RunClone(cloneURL string, args []string) (target string, err error) {
 	if err != nil {
 		return "", err
 	}
+
 	cloneCmd.Stdin = os.Stdin
 	cloneCmd.Stdout = os.Stdout
 	cloneCmd.Stderr = os.Stderr
@@ -363,11 +359,13 @@ func AddUpstreamRemote(upstreamURL, cloneDir string, branches []string) error {
 	for _, branch := range branches {
 		args = append(args, "-t", branch)
 	}
+
 	args = append(args, "-f", "upstream", upstreamURL)
 	cloneCmd, err := GitCommand(args...)
 	if err != nil {
 		return err
 	}
+
 	cloneCmd.Stdout = os.Stdout
 	cloneCmd.Stderr = os.Stderr
 	return run.PrepareCmd(cloneCmd).Run()
@@ -383,46 +381,22 @@ func ToplevelDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	output, err := run.PrepareCmd(showCmd).Output()
 	return firstLine(output), err
 
-}
-
-// ToplevelDirFromPath returns the top-level given path of the current repository
-func GetDirFromPath(p string) (string, error) {
-	showCmd, err := GitCommand("-C", p, "rev-parse", "--git-dir")
-	if err != nil {
-		return "", err
-	}
-	output, err := run.PrepareCmd(showCmd).Output()
-	return firstLine(output), err
-}
-
-func PathFromRepoRoot() string {
-	showCmd, err := GitCommand("rev-parse", "--show-prefix")
-	if err != nil {
-		return ""
-	}
-	output, err := run.PrepareCmd(showCmd).Output()
-	if err != nil {
-		return ""
-	}
-	if path := firstLine(output); path != "" {
-		return path[:len(path)-1]
-	}
-	return ""
 }
 
 func outputLines(output []byte) []string {
 	lines := strings.TrimSuffix(string(output), "\n")
 	return strings.Split(lines, "\n")
-
 }
 
 func firstLine(output []byte) string {
 	if i := bytes.IndexAny(output, "\n"); i >= 0 {
 		return string(output)[0:i]
 	}
+
 	return string(output)
 }
 

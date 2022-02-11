@@ -10,10 +10,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/cli/v2/pkg/export"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/jsoncolor"
-	"github.com/cli/cli/v2/pkg/set"
+	"github.com/abdfnx/gh/pkg/export"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/jsoncolor"
+	"github.com/abdfnx/gh/pkg/set"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -35,13 +35,16 @@ func AddJSONFlags(cmd *cobra.Command, exportTarget *Exporter, fields []string) {
 			prefix = toComplete[:idx+1]
 			toComplete = toComplete[idx+1:]
 		}
+
 		toComplete = strings.ToLower(toComplete)
 		for _, f := range fields {
 			if strings.HasPrefix(strings.ToLower(f), toComplete) {
 				results = append(results, prefix+f)
 			}
 		}
+
 		sort.Strings(results)
+
 		return results, cobra.ShellCompDirectiveNoSpace
 	})
 
@@ -52,6 +55,7 @@ func AddJSONFlags(cmd *cobra.Command, exportTarget *Exporter, fields []string) {
 				return err
 			}
 		}
+
 		if export, err := checkJSONFlags(c); err == nil {
 			if export == nil {
 				*exportTarget = nil
@@ -69,18 +73,17 @@ func AddJSONFlags(cmd *cobra.Command, exportTarget *Exporter, fields []string) {
 		} else {
 			return err
 		}
+
 		return nil
 	}
 
 	cmd.SetFlagErrorFunc(func(c *cobra.Command, e error) error {
-		if c == cmd && e.Error() == "flag needs an argument: --json" {
+		if e.Error() == "flag needs an argument: --json" {
 			sort.Strings(fields)
 			return JSONFlagError{fmt.Errorf("Specify one or more comma-separated fields for `--json`:\n  %s", strings.Join(fields, "\n  "))}
 		}
-		if cmd.HasParent() {
-			return cmd.Parent().FlagErrorFunc()(c, e)
-		}
-		return e
+
+		return c.Parent().FlagErrorFunc()(c, e)
 	})
 }
 
@@ -106,6 +109,7 @@ func checkJSONFlags(cmd *cobra.Command) (*exportFormat, error) {
 	} else if tplFlag.Changed {
 		return nil, errors.New("cannot use `--template` without specifying `--json`")
 	}
+
 	return nil, nil
 }
 
@@ -136,6 +140,7 @@ func (e *exportFormat) Write(ios *iostreams.IOStreams, data interface{}) error {
 	}
 
 	w := ios.Out
+
 	if e.filter != "" {
 		return export.FilterJSON(w, &buf, e.filter)
 	} else if e.template != "" {
@@ -159,6 +164,7 @@ func (e *exportFormat) exportData(v reflect.Value) interface{} {
 		for i := 0; i < v.Len(); i++ {
 			a[i] = e.exportData(v.Index(i))
 		}
+
 		return a
 	case reflect.Map:
 		t := reflect.MapOf(v.Type().Key(), emptyInterfaceType)
@@ -168,6 +174,7 @@ func (e *exportFormat) exportData(v reflect.Value) interface{} {
 			ve := reflect.ValueOf(e.exportData(iter.Value()))
 			m.SetMapIndex(iter.Key(), ve)
 		}
+
 		return m.Interface()
 	case reflect.Struct:
 		if v.CanAddr() && reflect.PtrTo(v.Type()).Implements(exportableType) {
@@ -178,11 +185,12 @@ func (e *exportFormat) exportData(v reflect.Value) interface{} {
 			return ve.ExportData(e.fields)
 		}
 	}
+
 	return v.Interface()
 }
 
 type exportable interface {
-	ExportData([]string) map[string]interface{}
+	ExportData([]string) *map[string]interface{}
 }
 
 var exportableType = reflect.TypeOf((*exportable)(nil)).Elem()

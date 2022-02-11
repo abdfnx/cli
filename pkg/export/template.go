@@ -11,9 +11,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/text"
-	"github.com/cli/cli/v2/utils"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/text"
+	"github.com/abdfnx/gh/utils"
 	"github.com/mgutz/ansi"
 )
 
@@ -43,6 +43,7 @@ func (t *Template) parseTemplate(tpl string) (*template.Template, error) {
 			if err != nil {
 				return "", err
 			}
+
 			return t.Format(format), nil
 		},
 		"timeago": func(input string) (string, error) {
@@ -50,6 +51,7 @@ func (t *Template) parseTemplate(tpl string) (*template.Template, error) {
 			if err != nil {
 				return "", err
 			}
+
 			return timeAgo(now.Sub(t)), nil
 		},
 
@@ -99,25 +101,26 @@ func ExecuteTemplate(io *iostreams.IOStreams, input io.Reader, template string) 
 	if err := t.Execute(input); err != nil {
 		return err
 	}
+
 	return t.End()
 }
 
 func jsonScalarToString(input interface{}) (string, error) {
 	switch tt := input.(type) {
-	case string:
-		return tt, nil
-	case float64:
-		if math.Trunc(tt) == tt {
-			return strconv.FormatFloat(tt, 'f', 0, 64), nil
-		} else {
-			return strconv.FormatFloat(tt, 'f', 2, 64), nil
-		}
-	case nil:
-		return "", nil
-	case bool:
-		return fmt.Sprintf("%v", tt), nil
-	default:
-		return "", fmt.Errorf("cannot convert type to string: %v", tt)
+		case string:
+			return tt, nil
+		case float64:
+			if math.Trunc(tt) == tt {
+				return strconv.FormatFloat(tt, 'f', 0, 64), nil
+			} else {
+				return strconv.FormatFloat(tt, 'f', 2, 64), nil
+			}
+		case nil:
+			return "", nil
+		case bool:
+			return fmt.Sprintf("%v", tt), nil
+		default:
+			return "", fmt.Errorf("cannot convert type to string: %v", tt)
 	}
 }
 
@@ -126,6 +129,7 @@ func (t *Template) color(colorName string, input interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return ansi.Color(text, colorName), nil
 }
 
@@ -135,6 +139,7 @@ func templatePluck(field string, input []interface{}) []interface{} {
 		obj := item.(map[string]interface{})
 		results = append(results, obj[field])
 	}
+
 	return results
 }
 
@@ -145,8 +150,10 @@ func templateJoin(sep string, input []interface{}) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		results = append(results, text)
 	}
+
 	return strings.Join(results, sep), nil
 }
 
@@ -154,6 +161,7 @@ func (t *Template) tableRow(fields ...interface{}) (string, error) {
 	if t.tablePrinter == nil {
 		t.tablePrinter = utils.NewTablePrinterWithOptions(t.io, utils.TablePrinterOptions{IsTTY: true})
 	}
+
 	for _, e := range fields {
 		s, err := jsonScalarToString(e)
 		if err != nil {
@@ -161,6 +169,7 @@ func (t *Template) tableRow(fields ...interface{}) (string, error) {
 		}
 		t.tablePrinter.AddField(s, text.TruncateColumn, nil)
 	}
+
 	t.tablePrinter.EndRow()
 	return "", nil
 }
@@ -173,6 +182,7 @@ func (t *Template) tableRender() (string, error) {
 			return "", fmt.Errorf("failed to render table: %v", err)
 		}
 	}
+
 	return "", nil
 }
 
@@ -181,6 +191,7 @@ func (t *Template) End() error {
 	if _, err := t.tableRender(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -188,17 +199,22 @@ func timeAgo(ago time.Duration) string {
 	if ago < time.Minute {
 		return "just now"
 	}
+
 	if ago < time.Hour {
 		return utils.Pluralize(int(ago.Minutes()), "minute") + " ago"
 	}
+
 	if ago < 24*time.Hour {
 		return utils.Pluralize(int(ago.Hours()), "hour") + " ago"
 	}
+
 	if ago < 30*24*time.Hour {
 		return utils.Pluralize(int(ago.Hours())/24, "day") + " ago"
 	}
+
 	if ago < 365*24*time.Hour {
 		return utils.Pluralize(int(ago.Hours())/24/30, "month") + " ago"
 	}
+
 	return utils.Pluralize(int(ago.Hours()/24/365), "year") + " ago"
 }

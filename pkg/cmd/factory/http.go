@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/ghinstance"
-	"github.com/cli/cli/v2/internal/httpunix"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/ghinstance"
+	"github.com/abdfnx/gh/core/httpunix"
+	"github.com/abdfnx/gh/pkg/iostreams"
 )
 
 var timezoneNames = map[int]string{
@@ -62,22 +61,11 @@ type configGetter interface {
 func NewHTTPClient(io *iostreams.IOStreams, cfg configGetter, appVersion string, setAccept bool) (*http.Client, error) {
 	var opts []api.ClientOption
 
-	// We need to check and potentially add the unix socket roundtripper option
-	// before adding any other options, since if we are going to use the unix
-	// socket transport, it needs to form the base of the transport chain
-	// represented by invocations of opts...
-	//
-	// Another approach might be to change the signature of api.NewHTTPClient to
-	// take an explicit base http.RoundTripper as its first parameter (it
-	// currently defaults internally to http.DefaultTransport), or add another
-	// variant like api.NewHTTPClientWithBaseRoundTripper. But, the only caller
-	// which would use that non-default behavior is right here, and it doesn't
-	// seem worth the cognitive overhead everywhere else just to serve this one
-	// use case.
 	unixSocket, err := cfg.Get("", "http_unix_socket")
 	if err != nil {
 		return nil, err
 	}
+
 	if unixSocket != "" {
 		opts = append(opts, api.ClientOption(func(http.RoundTripper) http.RoundTripper {
 			return httpunix.NewRoundTripper(unixSocket)
@@ -90,7 +78,7 @@ func NewHTTPClient(io *iostreams.IOStreams, cfg configGetter, appVersion string,
 	}
 
 	opts = append(opts,
-		api.AddHeader("User-Agent", fmt.Sprintf("GitHub CLI %s", appVersion)),
+		api.AddHeader("User-Agent", fmt.Sprintf("GitHub API %s", appVersion)),
 		api.AddHeaderFunc("Authorization", func(req *http.Request) (string, error) {
 			hostname := ghinstance.NormalizeHostname(getHost(req))
 			if token, err := cfg.Get(hostname, "oauth_token"); err == nil && token != "" {
@@ -108,14 +96,13 @@ func NewHTTPClient(io *iostreams.IOStreams, cfg configGetter, appVersion string,
 			}
 			return "", nil
 		}),
-		api.ExtractHeader("X-GitHub-SSO", &ssoHeader),
 	)
 
 	if setAccept {
 		opts = append(opts,
 			api.AddHeaderFunc("Accept", func(req *http.Request) (string, error) {
 				accept := "application/vnd.github.merge-info-preview+json" // PullRequest.mergeStateStatus
-				accept += ", application/vnd.github.nebula-preview"        // visibility when RESTing repos into an org
+				accept += ", application/vnd.github.nebula-preview" // visibility when RESTing repos into
 				if ghinstance.IsEnterprise(getHost(req)) {
 					accept += ", application/vnd.github.antiope-preview"    // Commit.statusCheckRollup
 					accept += ", application/vnd.github.shadow-cat-preview" // PullRequest.isDraft
@@ -128,25 +115,10 @@ func NewHTTPClient(io *iostreams.IOStreams, cfg configGetter, appVersion string,
 	return api.NewHTTPClient(opts...), nil
 }
 
-var ssoHeader string
-var ssoURLRE = regexp.MustCompile(`\burl=([^;]+)`)
-
-// SSOURL returns the URL of a SAML SSO challenge received by the server for clients that use ExtractHeader
-// to extract the value of the "X-GitHub-SSO" response header.
-func SSOURL() string {
-	if ssoHeader == "" {
-		return ""
-	}
-	m := ssoURLRE.FindStringSubmatch(ssoHeader)
-	if m == nil {
-		return ""
-	}
-	return m[1]
-}
-
 func getHost(r *http.Request) string {
 	if r.Host != "" {
 		return r.Host
 	}
+
 	return r.URL.Hostname()
 }

@@ -6,20 +6,21 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/markdown"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/markdown"
 	"github.com/spf13/cobra"
 )
 
 func referenceHelpFn(io *iostreams.IOStreams) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
 		wrapWidth := 0
+		style := "notty"
 		if io.IsStdoutTTY() {
-			io.DetectTerminalTheme()
 			wrapWidth = io.TerminalWidth()
+			style = markdown.GetStyle(io.DetectTerminalTheme())
 		}
 
-		md, err := markdown.Render(cmd.Long, markdown.WithIO(io), markdown.WithWrap(wrapWidth))
+		md, err := markdown.RenderWithWrap(cmd.Long, style, wrapWidth)
 		if err != nil {
 			fmt.Fprintln(io.ErrOut, err)
 			return
@@ -37,7 +38,7 @@ func referenceHelpFn(io *iostreams.IOStreams) func(*cobra.Command, []string) {
 }
 
 func referenceLong(cmd *cobra.Command) string {
-	buf := bytes.NewBufferString("# gh reference\n\n")
+	buf := bytes.NewBufferString("# secman reference\n\n")
 	for _, c := range cmd.Commands() {
 		if c.Hidden {
 			continue

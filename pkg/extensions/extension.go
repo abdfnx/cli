@@ -1,36 +1,23 @@
 package extensions
 
 import (
-	"io"
-
-	"github.com/cli/cli/v2/internal/ghrepo"
+	"path/filepath"
+	"strings"
 )
 
-type ExtTemplateType int
-
-const (
-	GitTemplateType      ExtTemplateType = 0
-	GoBinTemplateType    ExtTemplateType = 1
-	OtherBinTemplateType ExtTemplateType = 2
-)
-
-//go:generate moq -rm -out extension_mock.go . Extension
-type Extension interface {
-	Name() string // Extension Name without gh-
-	Path() string // Path to executable
-	URL() string
-	IsLocal() bool
-	UpdateAvailable() bool
-	IsBinary() bool
+type Extension struct {
+	path string
+	url  string
 }
 
-//go:generate moq -rm -out manager_mock.go . ExtensionManager
-type ExtensionManager interface {
-	List(includeMetadata bool) []Extension
-	Install(ghrepo.Interface) error
-	InstallLocal(dir string) error
-	Upgrade(name string, force bool) error
-	Remove(name string) error
-	Dispatch(args []string, stdin io.Reader, stdout, stderr io.Writer) (bool, error)
-	Create(name string, tmplType ExtTemplateType) error
+func (e *Extension) Name() string {
+	return strings.TrimPrefix(filepath.Base(e.path), "sm-")
+}
+
+func (e *Extension) Path() string {
+	return e.path
+}
+
+func (e *Extension) URL() string {
+	return e.url
 }

@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/pkg/cmd/auth/shared"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
@@ -33,9 +33,9 @@ func NewCmdStatus(f *cmdutil.Factory, runF func(*StatusOptions) error) *cobra.Co
 	cmd := &cobra.Command{
 		Use:   "status",
 		Args:  cobra.ExactArgs(0),
-		Short: "View authentication status",
+		Short: "View authentication status.",
 		Long: heredoc.Doc(`Verifies and displays information about your authentication state.
-
+			
 			This command will test your authentication state for each GitHub host that gh knows about and
 			report on any issues.
 		`),
@@ -48,7 +48,7 @@ func NewCmdStatus(f *cmdutil.Factory, runF func(*StatusOptions) error) *cobra.Co
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "Check a specific hostname's auth status")
+	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "", "", "Check a specific hostname's auth status")
 	cmd.Flags().BoolVarP(&opts.ShowToken, "show-token", "t", false, "Display the auth token")
 
 	return cmd
@@ -69,10 +69,7 @@ func statusRun(opts *StatusOptions) error {
 	statusInfo := map[string][]string{}
 
 	hostnames, err := cfg.Hosts()
-	if err != nil {
-		return err
-	}
-	if len(hostnames) == 0 {
+	if len(hostnames) == 0 || err != nil {
 		fmt.Fprintf(stderr,
 			"You are not logged into any GitHub hosts. Run %s to authenticate.\n", cs.Bold("gh auth login"))
 		return cmdutil.SilentError
@@ -127,7 +124,7 @@ func statusRun(opts *StatusOptions) error {
 				addMsg("%s %s: api call failed: %s", cs.Red("X"), hostname, err)
 			}
 			addMsg("%s Logged in to %s as %s (%s)", cs.SuccessIcon(), hostname, cs.Bold(username), tokenSource)
-			proto, _ := cfg.GetOrDefault(hostname, "git_protocol")
+			proto, _ := cfg.Get(hostname, "git_protocol")
 			if proto != "" {
 				addMsg("%s Git operations for %s configured to use %s protocol.",
 					cs.SuccessIcon(), hostname, cs.Bold(proto))
@@ -138,6 +135,7 @@ func statusRun(opts *StatusOptions) error {
 			}
 			addMsg("%s Token: %s", cs.SuccessIcon(), tokenDisplay)
 		}
+
 		addMsg("")
 
 		// NB we could take this opportunity to add or fix the "user" key in the hosts config. I chose
@@ -155,7 +153,9 @@ func statusRun(opts *StatusOptions) error {
 		if !ok {
 			continue
 		}
+
 		fmt.Fprintf(stderr, "%s\n", cs.Bold(hostname))
+
 		for _, line := range lines {
 			fmt.Fprintf(stderr, "  %s\n", line)
 		}

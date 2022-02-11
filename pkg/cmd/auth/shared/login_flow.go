@@ -7,11 +7,11 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/authflow"
-	"github.com/cli/cli/v2/internal/ghinstance"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/prompt"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/authflow"
+	"github.com/abdfnx/gh/core/ghinstance"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/prompt"
 )
 
 type iconfig interface {
@@ -49,9 +49,11 @@ func Login(opts *LoginOptions) error {
 				"SSH",
 			},
 		}, &proto)
+
 		if err != nil {
 			return fmt.Errorf("could not prompt: %w", err)
 		}
+
 		gitProtocol = strings.ToLower(proto)
 	}
 
@@ -62,6 +64,7 @@ func Login(opts *LoginOptions) error {
 		if err := credentialFlow.Prompt(hostname); err != nil {
 			return err
 		}
+
 		additionalScopes = append(additionalScopes, credentialFlow.Scopes()...)
 	}
 
@@ -78,9 +81,11 @@ func Login(opts *LoginOptions) error {
 				Message: "Upload your SSH public key to your GitHub account?",
 				Options: append(pubKeys, "Skip"),
 			}, &keyChoice)
+
 			if err != nil {
 				return fmt.Errorf("could not prompt: %w", err)
 			}
+
 			if keyChoice < len(pubKeys) {
 				keyToUpload = pubKeys[keyChoice]
 			}
@@ -92,6 +97,7 @@ func Login(opts *LoginOptions) error {
 			}
 		}
 	}
+
 	if keyToUpload != "" {
 		additionalScopes = append(additionalScopes, "admin:public_key")
 	}
@@ -99,14 +105,15 @@ func Login(opts *LoginOptions) error {
 	var authMode int
 	if opts.Web {
 		authMode = 0
-	} else if opts.Interactive {
+	} else {
 		err := prompt.SurveyAskOne(&survey.Select{
-			Message: "How would you like to authenticate GitHub CLI?",
+			Message: "How would you like to authenticate GitHub API?",
 			Options: []string{
 				"Login with a web browser",
 				"Paste an authentication token",
 			},
 		}, &authMode)
+
 		if err != nil {
 			return fmt.Errorf("could not prompt: %w", err)
 		}
@@ -117,11 +124,11 @@ func Login(opts *LoginOptions) error {
 
 	if authMode == 0 {
 		var err error
-		authToken, err = authflow.AuthFlowWithConfig(cfg, opts.IO, hostname, "", append(opts.Scopes, additionalScopes...), opts.Interactive)
+		authToken, err = authflow.AuthFlowWithConfig(cfg, opts.IO, hostname, "", append(opts.Scopes, additionalScopes...))
 		if err != nil {
 			return fmt.Errorf("failed to authenticate via web browser: %w", err)
 		}
-		fmt.Fprintf(opts.IO.ErrOut, "%s Authentication complete.\n", cs.SuccessIcon())
+
 		userValidated = true
 	} else {
 		minimumScopes := append([]string{"repo", "read:org"}, additionalScopes...)
@@ -133,6 +140,7 @@ func Login(opts *LoginOptions) error {
 		err := prompt.SurveyAskOne(&survey.Password{
 			Message: "Paste your authentication token:",
 		}, &authToken, survey.WithValidator(survey.Required))
+
 		if err != nil {
 			return fmt.Errorf("could not prompt: %w", err)
 		}
@@ -153,6 +161,7 @@ func Login(opts *LoginOptions) error {
 		apiClient := api.NewClientFromHTTP(httpClient)
 		var err error
 		username, err = api.CurrentLoginName(apiClient, hostname)
+
 		if err != nil {
 			return fmt.Errorf("error using api: %w", err)
 		}
@@ -164,11 +173,12 @@ func Login(opts *LoginOptions) error {
 	}
 
 	if gitProtocol != "" {
-		fmt.Fprintf(opts.IO.ErrOut, "- gh config set -h %s git_protocol %s\n", hostname, gitProtocol)
+		fmt.Fprintf(opts.IO.ErrOut, "- secman gh-config set --host %s git_protocol %s\n", hostname, gitProtocol)
 		err := cfg.Set(hostname, "git_protocol", gitProtocol)
 		if err != nil {
 			return err
 		}
+
 		fmt.Fprintf(opts.IO.ErrOut, "%s Configured git protocol\n", cs.SuccessIcon())
 	}
 
@@ -189,6 +199,7 @@ func Login(opts *LoginOptions) error {
 		if err != nil {
 			return err
 		}
+
 		fmt.Fprintf(opts.IO.ErrOut, "%s Uploaded the SSH key to your GitHub account: %s\n", cs.SuccessIcon(), cs.Bold(keyToUpload))
 	}
 
@@ -205,5 +216,6 @@ func scopesSentence(scopes []string, isEnterprise bool) string {
 			quoted[i] += " (GHE 3.0+)"
 		}
 	}
+
 	return strings.Join(quoted, ", ")
 }

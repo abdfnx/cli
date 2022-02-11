@@ -5,31 +5,28 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/context"
-	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/pkg/cmd/extension"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/context"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/core/ghrepo"
+	"github.com/abdfnx/gh/git"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 )
 
-func New(appVersion string) *cmdutil.Factory {
+func New() *cmdutil.Factory {
 	f := &cmdutil.Factory{
-		Config:         configFunc(), // No factory dependencies
-		Branch:         branchFunc(), // No factory dependencies
-		ExecutableName: "gh",
+		Config:     configFunc(), // No factory dependencies
+		Branch:     branchFunc(), // No factory dependencies
+		Executable: executable(), // No factory dependencies
 	}
 
 	f.IOStreams = ioStreams(f)                   // Depends on Config
-	f.HttpClient = httpClientFunc(f, appVersion) // Depends on Config, IOStreams, and appVersion
+	f.HttpClient = httpClientFunc(f, "x")        // Depends on Config, IOStreams, and appVersion
 	f.Remotes = remotesFunc(f)                   // Depends on Config
 	f.BaseRepo = BaseRepoFunc(f)                 // Depends on Remotes
 	f.Browser = browser(f)                       // Depends on Config, and IOStreams
-	f.ExtensionManager = extensionManager(f)     // Depends on Config, HttpClient, and IOStreams
 
 	return f
 }
@@ -40,6 +37,7 @@ func BaseRepoFunc(f *cmdutil.Factory) func() (ghrepo.Interface, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return remotes[0], nil
 	}
 }
@@ -57,10 +55,12 @@ func SmartBaseRepoFunc(f *cmdutil.Factory) func() (ghrepo.Interface, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		repoContext, err := context.ResolveRemotesToRepos(remotes, apiClient, "")
 		if err != nil {
 			return nil, err
 		}
+
 		baseRepo, err := repoContext.BaseRepo(f.IOStreams)
 		if err != nil {
 			return nil, err
@@ -75,6 +75,7 @@ func remotesFunc(f *cmdutil.Factory) func() (context.Remotes, error) {
 		readRemotes: git.Remotes,
 		getConfig:   f.Config,
 	}
+
 	return rr.Resolver()
 }
 
@@ -85,6 +86,7 @@ func httpClientFunc(f *cmdutil.Factory, appVersion string) func() (*http.Client,
 		if err != nil {
 			return nil, err
 		}
+
 		return NewHTTPClient(io, cfg, appVersion, true)
 	}
 }
@@ -99,8 +101,8 @@ func browser(f *cmdutil.Factory) cmdutil.Browser {
 // 2. browser from config
 // 3. BROWSER
 func browserLauncher(f *cmdutil.Factory) string {
-	if ghBrowser := os.Getenv("GH_BROWSER"); ghBrowser != "" {
-		return ghBrowser
+	if smBrowser := os.Getenv("GH_BROWSER"); smBrowser != "" {
+		return smBrowser
 	}
 
 	cfg, err := f.Config()
@@ -113,6 +115,15 @@ func browserLauncher(f *cmdutil.Factory) string {
 	return os.Getenv("BROWSER")
 }
 
+func executable() string {
+	secman := "secman"
+	if exe, err := os.Executable(); err == nil {
+		secman = exe
+	}
+
+	return secman
+}
+
 func configFunc() func() (config.Config, error) {
 	var cachedConfig config.Config
 	var configError error
@@ -120,11 +131,13 @@ func configFunc() func() (config.Config, error) {
 		if cachedConfig != nil || configError != nil {
 			return cachedConfig, configError
 		}
+
 		cachedConfig, configError = config.ParseDefaultConfig()
 		if errors.Is(configError, os.ErrNotExist) {
 			cachedConfig = config.NewBlankConfig()
 			configError = nil
 		}
+
 		cachedConfig = config.InheritEnv(cachedConfig)
 		return cachedConfig, configError
 	}
@@ -136,27 +149,9 @@ func branchFunc() func() (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("could not determine current branch: %w", err)
 		}
+
 		return currentBranch, nil
 	}
-}
-
-func extensionManager(f *cmdutil.Factory) *extension.Manager {
-	em := extension.NewManager(f.IOStreams)
-
-	cfg, err := f.Config()
-	if err != nil {
-		return em
-	}
-	em.SetConfig(cfg)
-
-	client, err := f.HttpClient()
-	if err != nil {
-		return em
-	}
-
-	em.SetClient(api.NewCachedClient(client, time.Second*30))
-
-	return em
 }
 
 func ioStreams(f *cmdutil.Factory) *iostreams.IOStreams {
@@ -166,7 +161,7 @@ func ioStreams(f *cmdutil.Factory) *iostreams.IOStreams {
 		return io
 	}
 
-	if prompt, _ := cfg.GetOrDefault("", "prompt"); prompt == "disabled" {
+	if prompt, _ := cfg.Get("", "prompt"); prompt == "disabled" {
 		io.SetNeverPrompt(true)
 	}
 

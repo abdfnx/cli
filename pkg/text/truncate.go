@@ -43,5 +43,6 @@ func TruncateColumn(maxWidth int, s string) string {
 	if i := strings.IndexAny(s, "\r\n"); i >= 0 {
 		s = s[:i] + ellipsis
 	}
+
 	return Truncate(maxWidth, s)
 }

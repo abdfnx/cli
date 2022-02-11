@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/config"
+	"github.com/abdfnx/gh/core/config"
 )
 
 var (
@@ -30,8 +30,9 @@ func (m SSHAliasMap) Translator() func(*url.URL) *url.URL {
 		if !ok {
 			return u
 		}
-		if strings.EqualFold(resolvedHost, "ssh.github.com") {
-			resolvedHost = "github.com"
+		// FIXME: cleanup domain logic
+		if strings.EqualFold(u.Hostname(), "github.com") && strings.EqualFold(resolvedHost, "ssh.github.com") {
+			return u
 		}
 		newURL, _ := url.Parse(u.String())
 		newURL.Host = resolvedHost

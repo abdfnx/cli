@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/text"
-	"github.com/cli/cli/v2/utils"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/text"
+	"github.com/abdfnx/gh/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -51,20 +51,22 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:   "list [<owner>]",
 		Args:  cobra.MaximumNArgs(1),
-		Short: "List repositories owned by user or organization",
+		Short: "List repositories owned by user or organization.",
 		RunE: func(c *cobra.Command, args []string) error {
 			if opts.Limit < 1 {
-				return cmdutil.FlagErrorf("invalid limit: %v", opts.Limit)
+				return &cmdutil.FlagError{Err: fmt.Errorf("invalid limit: %v", opts.Limit)}
 			}
 
 			if flagPrivate && flagPublic {
-				return cmdutil.FlagErrorf("specify only one of `--public` or `--private`")
+				return &cmdutil.FlagError{Err: fmt.Errorf("specify only one of `--public` or `--private`")}
 			}
+
 			if opts.Source && opts.Fork {
-				return cmdutil.FlagErrorf("specify only one of `--source` or `--fork`")
+				return &cmdutil.FlagError{Err: fmt.Errorf("specify only one of `--source` or `--fork`")}
 			}
+
 			if opts.Archived && opts.NonArchived {
-				return cmdutil.FlagErrorf("specify only one of `--archived` or `--no-archived`")
+				return &cmdutil.FlagError{Err: fmt.Errorf("specify only one of `--archived` or `--no-archived`")}
 			}
 
 			if flagPrivate {
@@ -80,6 +82,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 			if runF != nil {
 				return runF(&opts)
 			}
+
 			return listRun(&opts)
 		},
 	}
@@ -116,6 +119,7 @@ func listRun(opts *ListOptions) error {
 		NonArchived: opts.NonArchived,
 		Fields:      defaultFields,
 	}
+
 	if opts.Exporter != nil {
 		filter.Fields = opts.Exporter.Fields()
 	}
@@ -138,7 +142,9 @@ func listRun(opts *ListOptions) error {
 	if err := opts.IO.StartPager(); err != nil {
 		fmt.Fprintf(opts.IO.ErrOut, "error starting pager: %v\n", err)
 	}
+
 	defer opts.IO.StopPager()
+	
 
 	if opts.Exporter != nil {
 		return opts.Exporter.Write(opts.IO, listResult.Repositories)
@@ -171,9 +177,6 @@ func listRun(opts *ListOptions) error {
 		tp.EndRow()
 	}
 
-	if listResult.FromSearch && opts.Limit > 1000 {
-		fmt.Fprintln(opts.IO.ErrOut, "warning: this query uses the Search API which is capped at 1000 results maximum")
-	}
 	if opts.IO.IsStdoutTTY() {
 		hasFilters := filter.Visibility != "" || filter.Fork || filter.Source || filter.Language != "" || filter.Topic != ""
 		title := listHeader(listResult.Owner, len(listResult.Repositories), listResult.TotalCount, hasFilters)

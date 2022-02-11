@@ -1,22 +1,23 @@
 package fork
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/context"
-	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/internal/run"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
-	"github.com/cli/cli/v2/pkg/prompt"
-	"github.com/cli/cli/v2/utils"
+	"github.com/abdfnx/gh/api"
+	"github.com/abdfnx/gh/context"
+	"github.com/abdfnx/gh/core/config"
+	"github.com/abdfnx/gh/core/ghrepo"
+	"github.com/abdfnx/gh/core/run"
+	"github.com/abdfnx/gh/git"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/prompt"
+	"github.com/abdfnx/gh/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -29,7 +30,7 @@ type ForkOptions struct {
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 	Remotes    func() (context.Remotes, error)
-	Since      func(time.Time) time.Duration
+	Since func(time.Time) time.Duration
 
 	GitArgs      []string
 	Repository   string
@@ -39,13 +40,8 @@ type ForkOptions struct {
 	PromptRemote bool
 	RemoteName   string
 	Organization string
-	ForkName     string
 	Rename       bool
 }
-
-// TODO warn about useless flags (--remote, --remote-name) when running from outside a repository
-// TODO output over STDOUT not STDERR
-// TODO remote-name has no effect on its own; error that or change behavior
 
 func NewCmdFork(f *cmdutil.Factory, runF func(*ForkOptions) error) *cobra.Command {
 	opts := &ForkOptions{
@@ -61,11 +57,11 @@ func NewCmdFork(f *cmdutil.Factory, runF func(*ForkOptions) error) *cobra.Comman
 		Use: "fork [<repository>] [-- <gitflags>...]",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if cmd.ArgsLenAtDash() == 0 && len(args[1:]) > 0 {
-				return cmdutil.FlagErrorf("repository argument required when passing 'git clone' flags")
+				return cmdutil.FlagError{Err: fmt.Errorf("repository argument required when passing 'git clone' flags")}
 			}
 			return nil
 		},
-		Short: "Create a fork of a repository",
+		Short: "Create a fork of a repository.",
 		Long: `Create a fork of a repository.
 
 With no argument, creates a fork of the current repository. Otherwise, forks
@@ -84,17 +80,16 @@ Additional 'git clone' flags can be passed in by listing them after '--'.`,
 			}
 
 			if cmd.Flags().Changed("org") && opts.Organization == "" {
-				return cmdutil.FlagErrorf("--org cannot be blank")
+				return &cmdutil.FlagError{Err: errors.New("--org cannot be blank")}
 			}
 
 			if opts.RemoteName == "" {
-				return cmdutil.FlagErrorf("--remote-name cannot be blank")
+				return &cmdutil.FlagError{Err: errors.New("--remote-name cannot be blank")}
 			} else if !cmd.Flags().Changed("remote-name") {
-				opts.Rename = true // Any existing 'origin' will be renamed to upstream
+				opts.Rename = true
 			}
 
-			if promptOk {
-				// We can prompt for these if they were not specified.
+			if promptOk && !cmd.Flags().Changed("clone") {
 				opts.PromptClone = !cmd.Flags().Changed("clone")
 				opts.PromptRemote = !cmd.Flags().Changed("remote")
 			}
@@ -102,21 +97,22 @@ Additional 'git clone' flags can be passed in by listing them after '--'.`,
 			if runF != nil {
 				return runF(opts)
 			}
+
 			return forkRun(opts)
 		},
 	}
+
 	cmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
 		if err == pflag.ErrHelp {
 			return err
 		}
-		return cmdutil.FlagErrorf("%w\nSeparate git clone flags with '--'.", err)
+		return &cmdutil.FlagError{Err: fmt.Errorf("%w\nSeparate git clone flags with '--'.", err)}
 	})
 
 	cmd.Flags().BoolVar(&opts.Clone, "clone", false, "Clone the fork {true|false}")
 	cmd.Flags().BoolVar(&opts.Remote, "remote", false, "Add remote for fork {true|false}")
 	cmd.Flags().StringVar(&opts.RemoteName, "remote-name", defaultRemoteName, "Specify a name for a fork's new remote.")
 	cmd.Flags().StringVar(&opts.Organization, "org", "", "Create the fork in an organization")
-	cmd.Flags().StringVar(&opts.ForkName, "fork-name", "", "Specify a name for the forked repo")
 
 	return cmd
 }
@@ -130,8 +126,10 @@ func forkRun(opts *ForkOptions) error {
 		if err != nil {
 			return fmt.Errorf("unable to determine base repository: %w", err)
 		}
+
 		inParent = true
 		repoToFork = baseRepo
+
 	} else {
 		repoArg := opts.Repository
 
@@ -145,7 +143,6 @@ func forkRun(opts *ForkOptions) error {
 			if err != nil {
 				return fmt.Errorf("did not understand argument: %w", err)
 			}
-
 		} else if strings.HasPrefix(repoArg, "git@") {
 			parsedURL, err := git.ParseURL(repoArg)
 			if err != nil {
@@ -188,6 +185,7 @@ func forkRun(opts *ForkOptions) error {
 	// anything. We thus check the created time to see if the repo is brand new or not; if it's not,
 	// we assume the fork already existed and report an error.
 	createdAgo := opts.Since(forkedRepo.CreatedAt)
+
 	if createdAgo > time.Minute {
 		if connectedToTerminal {
 			fmt.Fprintf(stderr, "%s %s %s\n",
@@ -203,17 +201,6 @@ func forkRun(opts *ForkOptions) error {
 		}
 	}
 
-	// Rename the forked repo if ForkName is specified in opts.
-	if opts.ForkName != "" {
-		forkedRepo, err = api.RenameRepo(apiClient, forkedRepo, opts.ForkName)
-		if err != nil {
-			return fmt.Errorf("could not rename fork: %w", err)
-		}
-		if connectedToTerminal {
-			fmt.Fprintf(stderr, "%s Renamed fork to %s\n", cs.SuccessIconWithColor(cs.Green), cs.Bold(ghrepo.FullName(forkedRepo)))
-		}
-	}
-
 	if (inParent && (!opts.Remote && !opts.PromptRemote)) || (!inParent && (!opts.Clone && !opts.PromptClone)) {
 		return nil
 	}
@@ -222,6 +209,7 @@ func forkRun(opts *ForkOptions) error {
 	if err != nil {
 		return err
 	}
+
 	protocol, err := cfg.Get(repoToFork.RepoHost(), "git_protocol")
 	if err != nil {
 		return err
@@ -233,20 +221,17 @@ func forkRun(opts *ForkOptions) error {
 			return err
 		}
 
-		if protocol == "" { // user has no set preference
-			if remote, err := remotes.FindByRepo(repoToFork.RepoOwner(), repoToFork.RepoName()); err == nil {
-				scheme := ""
-				if remote.FetchURL != nil {
-					scheme = remote.FetchURL.Scheme
-				}
-				if remote.PushURL != nil {
-					scheme = remote.PushURL.Scheme
-				}
-				if scheme != "" {
-					protocol = scheme
-				} else {
-					protocol = cfg.Default("git_protocol")
-				}
+		if remote, err := remotes.FindByRepo(repoToFork.RepoOwner(), repoToFork.RepoName()); err == nil {
+
+			scheme := ""
+			if remote.FetchURL != nil {
+				scheme = remote.FetchURL.Scheme
+			}
+			if remote.PushURL != nil {
+				scheme = remote.PushURL.Scheme
+			}
+			if scheme != "" {
+				protocol = scheme
 			}
 		}
 
@@ -264,6 +249,7 @@ func forkRun(opts *ForkOptions) error {
 				return fmt.Errorf("failed to prompt: %w", err)
 			}
 		}
+
 		if remoteDesired {
 			remoteName := opts.RemoteName
 			remotes, err := opts.Remotes()
@@ -306,6 +292,7 @@ func forkRun(opts *ForkOptions) error {
 				return fmt.Errorf("failed to prompt: %w", err)
 			}
 		}
+
 		if cloneDesired {
 			forkedRepoURL := ghrepo.FormatRemoteURL(forkedRepo, protocol)
 			cloneDir, err := git.RunClone(forkedRepoURL, opts.GitArgs)

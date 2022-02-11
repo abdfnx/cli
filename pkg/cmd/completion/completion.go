@@ -1,11 +1,12 @@
 package completion
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/pkg/cmdutil"
-	"github.com/cli/cli/v2/pkg/iostreams"
+	"github.com/abdfnx/gh/pkg/cmdutil"
+	"github.com/abdfnx/gh/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +30,7 @@ func NewCmdCompletion(io *iostreams.IOStreams) *cobra.Command {
 			### bash
 
 			First, ensure that you install %[1]sbash-completion%[1]s using your package manager.
-
+			
 			After, add this to your %[1]s~/.bash_profile%[1]s:
 
 				eval "$(gh completion -s bash)"
@@ -52,22 +53,11 @@ func NewCmdCompletion(io *iostreams.IOStreams) *cobra.Command {
 			Generate a %[1]sgh.fish%[1]s completion script:
 
 				gh completion -s fish > ~/.config/fish/completions/gh.fish
-
-			### PowerShell
-
-			Open your profile script with:
-
-				mkdir -Path (Split-Path -Parent $profile) -ErrorAction SilentlyContinue
-				notepad $profile
-			
-			Add the line and save the file:
-
-				Invoke-Expression -Command $(gh completion -s powershell | Out-String)
 		`, "`"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if shellType == "" {
 				if io.IsStdoutTTY() {
-					return cmdutil.FlagErrorf("error: the value for `--shell` is required")
+					return &cmdutil.FlagError{Err: errors.New("error: the value for `--shell` is required")}
 				}
 				shellType = "bash"
 			}
