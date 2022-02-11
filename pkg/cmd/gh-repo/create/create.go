@@ -71,13 +71,13 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 			# create a repository under your account using the current directory name
 			$ git init my-project
 			$ cd my-project
-			$ tran repo create
+			$ tran gh-repo create
 			# create a repository with a specific name
-			$ tran repo create my-project
+			$ tran gh-repo create my-project
 			# create a repository in an organization
-			$ tran repo create scmn-dev/tran
+			$ tran gh-repo create scmn-dev/tran
 			# disable issues and wiki
-			$ tran repo create --enable-issues=false --enable-wiki=false
+			$ tran gh-repo create --enable-issues=false --enable-wiki=false
 	  `),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

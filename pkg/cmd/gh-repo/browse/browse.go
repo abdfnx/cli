@@ -46,15 +46,15 @@ func NewCmdBrowse(f *cmdutil.Factory, runF func(*BrowseOptions) error) *cobra.Co
 		Use:   "browse [<number> | <path>]",
 		Args:  cobra.MaximumNArgs(1),
 		Example: heredoc.Doc(`
-			$ tran repo browse
+			$ tran gh-repo browse
 			#=> Open the home page of the current repository
-			$ tran repo browse 61
+			$ tran gh-repo browse 61
 			#=> Open issue or pull request 61
-			$ tran repo browse --settings
+			$ tran gh-repo browse --settings
 			#=> Open repository settings
-			$ tran repo browse main.go:312
+			$ tran gh-repo browse main.go:312
 			#=> Open main.go at line 312
-			$ tran repo browse main.go --branch main
+			$ tran gh-repo browse main.go --branch main
 			#=> Open main.go in the main branch
 		`),
 		Annotations: map[string]string{
@@ -171,12 +171,12 @@ func runBrowse(opts *BrowseOptions) error {
 func parseFileArg(fileArg string) (string, error) {
 	arr := strings.Split(fileArg, ":")
 	if len(arr) > 2 {
-		return "", fmt.Errorf("invalid use of colon\nUse 'tran repo browse --help' for more information about browse\n")
+		return "", fmt.Errorf("invalid use of colon\nUse 'tran gh-repo browse --help' for more information about browse\n")
 	}
 
 	if len(arr) > 1 {
 		if !isNumber(arr[1]) {
-			return "", fmt.Errorf("invalid line number after colon\nUse 'tran repo browse --help' for more information about browse\n")
+			return "", fmt.Errorf("invalid line number after colon\nUse 'tran gh-repo browse --help' for more information about browse\n")
 		}
 
 		return arr[0] + "#L" + arr[1], nil

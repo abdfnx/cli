@@ -2,18 +2,18 @@ package repo
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	repoBrowseCmd "github.com/abdfnx/gh/pkg/cmd/repo/browse"
-	repoCloneCmd "github.com/abdfnx/gh/pkg/cmd/repo/clone"
-	repoCreateCmd "github.com/abdfnx/gh/pkg/cmd/repo/create"
-	creditsCmd "github.com/abdfnx/gh/pkg/cmd/repo/credits"
-	repoForkCmd "github.com/abdfnx/gh/pkg/cmd/repo/fork"
-	gardenCmd "github.com/abdfnx/gh/pkg/cmd/repo/garden"
-	repoListCmd "github.com/abdfnx/gh/pkg/cmd/repo/list"
-	repoSyncCmd "github.com/abdfnx/gh/pkg/cmd/repo/sync"
-	repoViewCmd "github.com/abdfnx/gh/pkg/cmd/repo/view"
+	repoBrowseCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/browse"
+	repoCloneCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/clone"
+	repoCreateCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/create"
+	creditsCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/credits"
+	repoForkCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/fork"
+	gardenCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/garden"
+	repoListCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/list"
+	repoSyncCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/sync"
+	repoViewCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo/view"
 	"github.com/abdfnx/gh/pkg/cmdutil"
+	git_config "github.com/gepis/git"
 	"github.com/abdfnx/gh/utils"
-	git_config "github.com/david-tomson/tran-git"
 	"github.com/spf13/cobra"
 
 	"github.com/abdfnx/gh/pkg/cmd/factory"
@@ -21,12 +21,12 @@ import (
 
 func NewCmdRepo(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "repo <command>",
+		Use:   "gh-repo <command>",
 		Short: "Create, clone, fork, and view repositories.",
 		Long:  `Work with GitHub repositories`,
 		Example: heredoc.Doc(`
-			tran repo create
-			tran repo clone scmn-dev/gh-api
+			tran gh-repo create
+			tran gh-repo clone moby/moby
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

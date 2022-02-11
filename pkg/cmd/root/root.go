@@ -6,7 +6,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	authCmd "github.com/abdfnx/gh/pkg/cmd/auth"
 	"github.com/abdfnx/gh/pkg/cmd/factory"
-	repoCmd "github.com/abdfnx/gh/pkg/cmd/repo"
+	repoCmd "github.com/abdfnx/gh/pkg/cmd/gh-repo"
 	"github.com/abdfnx/gh/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) *cobra.Command {
 		SilenceUsage:  true,
 		Example: heredoc.Doc(`
 			tran auth login
-			tran repo clone scmn-dev/gh-api
+			tran gh-repo clone vercel/turborepo
 		`),
 		Annotations: map[string]string{
 			"help:feedback": heredoc.Doc(`
