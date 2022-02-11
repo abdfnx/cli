@@ -12,8 +12,8 @@ import (
 	repoSyncCmd "github.com/abdfnx/gh/pkg/cmd/repo/sync"
 	repoViewCmd "github.com/abdfnx/gh/pkg/cmd/repo/view"
 	"github.com/abdfnx/gh/pkg/cmdutil"
-	git_config "github.com/gepis/git"
 	"github.com/abdfnx/gh/utils"
+	git_config "github.com/david-tomson/tran-git"
 	"github.com/spf13/cobra"
 
 	"github.com/abdfnx/gh/pkg/cmd/factory"

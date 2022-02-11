@@ -3,7 +3,7 @@ package get_username
 import (
 	"fmt"
 
-	git_config "github.com/gepis/git"
+	git_config "github.com/david-tomson/tran-git"
 	"github.com/spf13/cobra"
 )
 

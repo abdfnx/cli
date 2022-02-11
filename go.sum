@@ -51,6 +51,7 @@ github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8 h1:xzYJEypr/85nB
 github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8/go.mod h1:oX5x61PbNXchhh0oikYAH+4Pcfw5LKv21+Jnpr6r6Pc=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Timothee-Cardoso/tc-exe v1.0.0/go.mod h1:dq8JjfgZPLtVNCSxRckj9GPhjaCm7IifIyqmkUgwAiM=
+github.com/abdfnx/gh v0.1.0/go.mod h1:ys3oDJrg0HbmBfp+IBRNgimg7voQRF97hsKz9+hmZf0=
 github.com/abdfnx/git_config v0.0.2/go.mod h1:f1TOBGJT4JEeyrkD3uz1hQtFSBZmdI39ao+yuqXqyAg=
 github.com/abdfnx/git_config v0.0.3/go.mod h1:MVrl8232db9AG+U7riNnkyzn7TxczNmUhPA5ef8Z6Nk=
 github.com/abdfnx/git_config v0.0.32/go.mod h1:ZUF8HzpOLtnx4rbG3r4TeutEOfE1ys+Qd33egGNxcoM=
@@ -122,6 +123,8 @@ github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964/go.mod h1:Xd9
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/david-tomson/tran-git v0.0.1 h1:QUhcVfwNLMBefJPHsCy1LpARfqe12i5CDwo0D4lpcJo=
+github.com/david-tomson/tran-git v0.0.1/go.mod h1:nyXPGbSZlsXiSDEqx4raYiHjEEkqAkbNRqTYAi5UpT8=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/dlclark/regexp2 v1.2.0/go.mod h1:2pZnwuY/m+8K6iRw6wQdMtk+rH5tNGR1i55kozfMjCc=
@@ -144,11 +147,9 @@ github.com/gabriel-vasile/mimetype v1.1.2/go.mod h1:6CDPel/o/3/s4+bp6kIbsWATq8pm
 github.com/gepis/git v1.0.2/go.mod h1:ncCqZZeMRyQnnhbcZQiD6bYl+/KOobZX0OWvzPtTwxk=
 github.com/gepis/git v1.0.6/go.mod h1:jIyctQSebfhV8MRlLRHNLWEmhyQCrh7QkODI56sG49Q=
 github.com/gepis/git v1.0.8/go.mod h1:oXg/a3rRu1ChiTXCP64ejNw3+CWxj4riXwWSIX7Xw9s=
-github.com/gepis/git v1.0.9 h1:1OZvfVHggQPzeHHRnCAj0w0lL2ncKoKWnvgJJkzqe+8=
 github.com/gepis/git v1.0.9/go.mod h1:5fUuWkgmRPpbp++eU0nVE363ymTy2eggh7aCyolDGb4=
 github.com/gepis/sm-gh-api v0.3.56/go.mod h1:ou5Cu5LwASsNpSVV5YAM01SLusKehEURsttxTGLp45k=
 github.com/gepis/sm-gh-api v0.3.58/go.mod h1:FiyXjqgDH5viGqFT0qlVeHE7jyuizJeeyPzvdebq27k=
-github.com/gepis/sm-gh-api v0.3.61 h1:CpkrDknYV/hs7ETzr1emi4OnWL6wtjFUX5XqhvCYC48=
 github.com/gepis/sm-gh-api v0.3.61/go.mod h1:Ar56YXFWsYnvjBkQ2+f6LZ7rcf6EiqX9rS68+rANc24=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
@@ -401,7 +402,6 @@ github.com/scmn-dev/secman v0.0.0-20210809085739-bae204f9d756/go.mod h1:6ybtQck7
 github.com/scmn-dev/secman v0.0.0-20210809103458-bd6a4ce691aa/go.mod h1:bygnQln6s1G9RASHGuk7VkZRfHD7jhjRPL/n4tu30dM=
 github.com/scmn-dev/secman v0.0.0-20210831164109-5ddbb1cdc3dc/go.mod h1:XJeaKbYlxEZvcsaSV62JnbZGZMjd+iG1UuiFOlGTTuM=
 github.com/scmn-dev/secman v0.0.0-20210902065137-f250bba2eb2c/go.mod h1:pR2R+fNx7yCwYvGP3ia37u7tyhdoU0TcV6bHyS3BIgE=
-github.com/scmn-dev/secman v0.0.0-20210920090640-a4f9f6c08509 h1:nC7g6uRAObQK8CtA+W8UcZROWdrUPttc/QkfEdxnXCE=
 github.com/scmn-dev/secman v0.0.0-20210920090640-a4f9f6c08509/go.mod h1:q45hx6ypQvJu+wSsRIkSCnEt9w9jRNmnDwcz/++Coro=
 github.com/scmn-dev/version-checker v0.1.43/go.mod h1:EcUfBf8tSrPyw0p6ky6+dFJoUVaLA5ILZDFYCCHl4dM=
 github.com/scmn-dev/version-checker v0.1.44/go.mod h1:YWUr+MGKeWNbgxig2wRl3SdFdNelP/cfrOQnnJa4bUA=

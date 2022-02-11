@@ -10,7 +10,7 @@ require (
 	github.com/cli/oauth v0.8.0
 	github.com/cli/safeexec v1.0.0
 	github.com/cpuguy83/go-md2man/v2 v2.0.0
-	github.com/gepis/git v1.0.9
+	github.com/david-tomson/tran-git v0.0.1
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/hashicorp/go-version v1.3.0
 	github.com/henvic/httpretty v0.0.6
@@ -40,7 +40,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/fatih/color v1.12.0 // indirect
-	github.com/gepis/sm-gh-api v0.3.61 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
@@ -51,7 +50,6 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
-	github.com/scmn-dev/secman v0.0.0-20210920090640-a4f9f6c08509 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/yuin/goldmark v1.4.0 // indirect
