@@ -1,12 +1,12 @@
-package config
+package ghconfig
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/abdfnx/gh/core/config"
-	cmdGet "github.com/abdfnx/gh/pkg/cmd/cluster/get"
-	cmdSet "github.com/abdfnx/gh/pkg/cmd/cluster/set"
+	cmdGet "github.com/abdfnx/gh/pkg/cmd/gh-config/get"
+	cmdSet "github.com/abdfnx/gh/pkg/cmd/gh-config/set"
 	"github.com/abdfnx/gh/pkg/cmdutil"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ func NewCmdConfig(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:   "cluster <command>",
+		Use:   "gh-config <command>",
 		Short: "Manage configuration of github for tran.",
 		Long:  longDoc.String(),
 	}

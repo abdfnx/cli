@@ -219,7 +219,7 @@ func shouldCheckForUpdate() bool {
 func isCI() bool {
 	return os.Getenv("CI") != "" || // GitHub Actions, Travis CI, CircleCI, Cirrus CI, GitLab CI, AppVeyor, CodeShip, dsari
 		os.Getenv("BUILD_NUMBER") != "" || // Jenkins, TeamCity
-		os.Getenv("RUN_ID") != "" // TaskCluster, dsari
+		os.Getenv("RUN_ID") != ""
 }
 
 func checkForUpdate(currentVersion string) (*update.ReleaseInfo, error) {
