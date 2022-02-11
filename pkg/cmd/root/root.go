@@ -13,15 +13,15 @@ import (
 
 func NewCmdRoot(f *cmdutil.Factory, version, buildDate string) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "secman <command> <subcommand> [flags]",
-		Short: "Secman CLI",
+		Use:   "tran <command> <subcommand> [flags]",
+		Short: "Tran With GitHub",
 		Long:  `Work seamlessly with GitHub from the command line.`,
 
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		Example: heredoc.Doc(`
-			secman auth login
-			secman repo clone scmn-dev/gh-api
+			tran auth login
+			tran repo clone scmn-dev/gh-api
 		`),
 		Annotations: map[string]string{
 			"help:feedback": heredoc.Doc(`

@@ -57,7 +57,7 @@ func helperRun(opts *CredentialOptions) error {
 	}
 
 	if opts.Operation != "get" {
-		return fmt.Errorf("secman auth git-credential: %q operation not supported", opts.Operation)
+		return fmt.Errorf("tran auth git-credential: %q operation not supported", opts.Operation)
 	}
 
 	wants := map[string]string{}

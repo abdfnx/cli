@@ -52,13 +52,13 @@ func NewCmdSync(f *cmdutil.Factory, runF func(*SyncOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Sync local repository from remote parent
-			$ secman repo sync
+			$ tran repo sync
 			# Sync local repository from remote parent on specific branch
-			$ secman repo sync --branch v1
+			$ tran repo sync --branch v1
 			# Sync remote fork from its parent
-			$ secman repo sync owner/cli-fork
+			$ tran repo sync owner/cli-fork
 			# Sync remote repository from another remote repository
-			$ secman repo sync owner/repo --source owner2/repo2
+			$ tran repo sync owner/repo --source owner2/repo2
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {

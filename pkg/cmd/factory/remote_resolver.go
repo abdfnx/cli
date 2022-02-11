@@ -88,7 +88,7 @@ func (rr *remoteResolver) Resolver() func() (context.Remotes, error) {
 				return nil, errors.New("set the GH_HOST environment variable to specify which GitHub host to use")
 			}
 
-			return nil, errors.New("none of the git remotes configured for this repository point to a known GitHub host. To tell secman about a new GitHub host, please use `secman auth login`")
+			return nil, errors.New("none of the git remotes configured for this repository point to a known GitHub host. To tell tran about a new GitHub host, please use `tran auth login`")
 		}
 
 		return cachedRemotes, nil

@@ -22,7 +22,6 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/muesli/termenv v0.9.0
 	github.com/scmn-dev/browser v0.1.3
-	github.com/scmn-dev/secman v0.0.0-20210920090640-a4f9f6c08509
 	github.com/shurcooL/githubv4 v0.0.0-20210725200734-83ba7b4c9228
 	github.com/shurcooL/graphql v0.0.0-20200928012149-18c5c3165e3a
 	github.com/spf13/cobra v1.2.1
@@ -34,7 +33,6 @@ require (
 )
 
 require (
-	github.com/Timothee-Cardoso/tc-exe v1.0.0 // indirect
 	github.com/alecthomas/chroma v0.9.2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/cli/browser v1.1.0 // indirect
@@ -42,6 +40,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.0 // indirect
 	github.com/fatih/color v1.12.0 // indirect
+	github.com/gepis/sm-gh-api v0.3.61 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itchyny/timefmt-go v0.1.3 // indirect
@@ -52,7 +51,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
-	github.com/scmn-dev/gh-api v0.3.42 // indirect
+	github.com/scmn-dev/secman v0.0.0-20210920090640-a4f9f6c08509 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/yuin/goldmark v1.4.0 // indirect

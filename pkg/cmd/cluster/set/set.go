@@ -30,10 +30,10 @@ func NewCmdConfigSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Co
 		Use:   "set <key> <value>",
 		Short: "Update configuration with a value for the given key",
 		Example: heredoc.Doc(`
-			secman config set editor vim
-			secman config set editor "code --wait"
-			secman config set git_protocol ssh --host github.com
-			secman config set prompt disabled
+			tran config set editor vim
+			tran config set editor "code --wait"
+			tran config set git_protocol ssh --host github.com
+			tran config set prompt disabled
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

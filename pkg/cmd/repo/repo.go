@@ -13,7 +13,7 @@ import (
 	repoViewCmd "github.com/abdfnx/gh/pkg/cmd/repo/view"
 	"github.com/abdfnx/gh/pkg/cmdutil"
 	git_config "github.com/gepis/git"
-	"github.com/scmn-dev/secman/tools/shared"
+	"github.com/abdfnx/gh/utils"
 	"github.com/spf13/cobra"
 
 	"github.com/abdfnx/gh/pkg/cmd/factory"
@@ -25,8 +25,8 @@ func NewCmdRepo(f *cmdutil.Factory) *cobra.Command {
 		Short: "Create, clone, fork, and view repositories.",
 		Long:  `Work with GitHub repositories`,
 		Example: heredoc.Doc(`
-			secman repo create
-			secman repo clone scmn-dev/gh-api
+			tran repo create
+			tran repo clone scmn-dev/gh-api
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`
@@ -39,7 +39,7 @@ func NewCmdRepo(f *cmdutil.Factory) *cobra.Command {
 			username := git_config.GitConfig()
 
 			if username == ":username" {
-				shared.AuthMessage()
+				utils.AuthMessage()
 
 			} else {
 				cmd.Help()

@@ -50,7 +50,6 @@ github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6
 github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8 h1:xzYJEypr/85nBpB11F9br+3HUrpgb+fcm5iADzXXYEw=
 github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8/go.mod h1:oX5x61PbNXchhh0oikYAH+4Pcfw5LKv21+Jnpr6r6Pc=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/Timothee-Cardoso/tc-exe v1.0.0 h1:puUgqm747Dd1usLZIRPZDIg4wDRjxs7Sirn8+GOmcPM=
 github.com/Timothee-Cardoso/tc-exe v1.0.0/go.mod h1:dq8JjfgZPLtVNCSxRckj9GPhjaCm7IifIyqmkUgwAiM=
 github.com/abdfnx/git_config v0.0.2/go.mod h1:f1TOBGJT4JEeyrkD3uz1hQtFSBZmdI39ao+yuqXqyAg=
 github.com/abdfnx/git_config v0.0.3/go.mod h1:MVrl8232db9AG+U7riNnkyzn7TxczNmUhPA5ef8Z6Nk=
@@ -147,6 +146,10 @@ github.com/gepis/git v1.0.6/go.mod h1:jIyctQSebfhV8MRlLRHNLWEmhyQCrh7QkODI56sG49
 github.com/gepis/git v1.0.8/go.mod h1:oXg/a3rRu1ChiTXCP64ejNw3+CWxj4riXwWSIX7Xw9s=
 github.com/gepis/git v1.0.9 h1:1OZvfVHggQPzeHHRnCAj0w0lL2ncKoKWnvgJJkzqe+8=
 github.com/gepis/git v1.0.9/go.mod h1:5fUuWkgmRPpbp++eU0nVE363ymTy2eggh7aCyolDGb4=
+github.com/gepis/sm-gh-api v0.3.56/go.mod h1:ou5Cu5LwASsNpSVV5YAM01SLusKehEURsttxTGLp45k=
+github.com/gepis/sm-gh-api v0.3.58/go.mod h1:FiyXjqgDH5viGqFT0qlVeHE7jyuizJeeyPzvdebq27k=
+github.com/gepis/sm-gh-api v0.3.61 h1:CpkrDknYV/hs7ETzr1emi4OnWL6wtjFUX5XqhvCYC48=
+github.com/gepis/sm-gh-api v0.3.61/go.mod h1:Ar56YXFWsYnvjBkQ2+f6LZ7rcf6EiqX9rS68+rANc24=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20191125211704-12ad95a8df72/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
@@ -392,7 +395,6 @@ github.com/scmn-dev/gh-api v0.3.5/go.mod h1:ydYzo2zM9rLvzDhNzbMkiiIv99Q7Bm6MNZj4
 github.com/scmn-dev/gh-api v0.3.32/go.mod h1:DELTISOMbLzqHdJ/LReVEi3ERfo9hwrrK5YkPFPPBZo=
 github.com/scmn-dev/gh-api v0.3.33/go.mod h1:Q4W7ZpDKUTJZ+KokLo8paVqDVZ/SXTAkzaR2VPpQB0g=
 github.com/scmn-dev/gh-api v0.3.41/go.mod h1:SYkHTfAW6oAAKWY/1kURW6FagTF4im0SFbA2HoRpj0k=
-github.com/scmn-dev/gh-api v0.3.42 h1:+Bd6bWwausw/XL+kXYYXN3hTP00HxUoP2Ds/GRUPSIk=
 github.com/scmn-dev/gh-api v0.3.42/go.mod h1:0/kBWHwTOn9wweC2CjjuGEB4upsAOrQb7BuV0nTDpm8=
 github.com/scmn-dev/git v0.0.0-20210901094448-922e6fdee5fc/go.mod h1:IiY6SHnt5tDW/jQxypeezLYwuH7eonaDWcT3QIKeh5Y=
 github.com/scmn-dev/secman v0.0.0-20210809085739-bae204f9d756/go.mod h1:6ybtQck7EVYo4xjMh6rYLpKQzAXlOCZroV9KK4mls4M=

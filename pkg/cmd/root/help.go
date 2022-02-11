@@ -166,8 +166,8 @@ func rootHelpFunc(f *cmdutil.Factory, command *cobra.Command, args []string) {
 	}
 
 	helpEntries = append(helpEntries, helpEntry{"LEARN MORE", `
-Use 'secman <command> <subcommand> --help' for more information about a command.
-Read 📚 at https://docs.secman.dev`})
+Use 'tran <command> <subcommand> --help' for more information about a command.
+Read 📚 at https://docs.tran.dev`})
 	if _, ok := command.Annotations["help:feedback"]; ok {
 		helpEntries = append(helpEntries, helpEntry{"FEEDBACK", command.Annotations["help:feedback"]})
 	}

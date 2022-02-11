@@ -31,12 +31,12 @@ func ConfigDir() string {
 	if a := os.Getenv(GH_CONFIG_DIR); a != "" {
 		path = a
 	} else if b := os.Getenv(XDG_CONFIG_HOME); b != "" {
-		path = filepath.Join(b, "sm")
+		path = filepath.Join(b, "gh")
 	} else if c := os.Getenv(APP_DATA); runtime.GOOS == "windows" && c != "" {
-		path = filepath.Join(c, "Secman CLI")
+		path = filepath.Join(c, "GitHub CLI")
 	} else {
 		d, _ := os.UserHomeDir()
-		path = filepath.Join(d, ".config", "sm")
+		path = filepath.Join(d, ".config", "gh")
 	}
 
 	// If the path does not exist and the GH_CONFIG_DIR flag is not set try
@@ -49,18 +49,18 @@ func ConfigDir() string {
 }
 
 // State path precedence
-// 1. XDG_CONFIG_HOME
+// 1. XDG_STATE_HOME
 // 2. LocalAppData (windows only)
 // 3. HOME
 func StateDir() string {
 	var path string
 	if a := os.Getenv(XDG_STATE_HOME); a != "" {
-		path = filepath.Join(a, "sm")
+		path = filepath.Join(a, "gh")
 	} else if b := os.Getenv(LOCAL_APP_DATA); runtime.GOOS == "windows" && b != "" {
-		path = filepath.Join(b, "Secman CLI")
+		path = filepath.Join(b, "GitHub CLI")
 	} else {
 		c, _ := os.UserHomeDir()
-		path = filepath.Join(c, ".local", "state", "sm")
+		path = filepath.Join(c, ".local", "state", "gh")
 	}
 
 	// If the path does not exist try migrating state from default paths
@@ -78,12 +78,12 @@ func StateDir() string {
 func DataDir() string {
 	var path string
 	if a := os.Getenv(XDG_DATA_HOME); a != "" {
-		path = filepath.Join(a, "sm")
+		path = filepath.Join(a, "gh")
 	} else if b := os.Getenv(LOCAL_APP_DATA); runtime.GOOS == "windows" && b != "" {
-		path = filepath.Join(b, "Secman CLI")
+		path = filepath.Join(b, "GitHub CLI")
 	} else {
 		c, _ := os.UserHomeDir()
-		path = filepath.Join(c, ".local", "share", "sm")
+		path = filepath.Join(c, ".local", "share", "gh")
 	}
 
 	return path
@@ -96,7 +96,7 @@ var errNotExist = errors.New("not exist")
 // If configs exist then move them to newPath
 func autoMigrateConfigDir(newPath string) error {
 	path, err := os.UserHomeDir()
-	if oldPath := filepath.Join(path, ".config", "sm"); err == nil && dirExists(oldPath) {
+	if oldPath := filepath.Join(path, ".config", "gh"); err == nil && dirExists(oldPath) {
 		return migrateDir(oldPath, newPath)
 	}
 
@@ -107,7 +107,7 @@ func autoMigrateConfigDir(newPath string) error {
 // If state file exist then move it to newPath
 func autoMigrateStateDir(newPath string) error {
 	path, err := os.UserHomeDir()
-	if oldPath := filepath.Join(path, ".config", "sm"); err == nil && dirExists(oldPath) {
+	if oldPath := filepath.Join(path, ".config", "gh"); err == nil && dirExists(oldPath) {
 		return migrateFile(oldPath, newPath, "state.yml")
 	}
 
@@ -180,6 +180,7 @@ var ReadConfigFile = func(filename string) ([]byte, error) {
 	if err != nil {
 		return nil, pathError(err)
 	}
+
 	defer f.Close()
 
 	data, err := ioutil.ReadAll(f)
@@ -200,6 +201,7 @@ var WriteConfigFile = func(filename string, data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	defer cfgFile.Close()
 
 	_, err = cfgFile.Write(data)
@@ -220,6 +222,7 @@ func parseConfigFile(filename string) ([]byte, *yaml.Node, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return data, root, err
 }
 
@@ -236,9 +239,11 @@ func parseConfigData(data []byte) (*yaml.Node, error) {
 			Content: []*yaml.Node{{Kind: yaml.MappingNode}},
 		}, nil
 	}
+
 	if root.Content[0].Kind != yaml.MappingNode {
 		return &root, fmt.Errorf("expected a top level map")
 	}
+
 	return &root, nil
 }
 
@@ -287,6 +292,7 @@ func migrateConfig(filename string) error {
 
 func parseConfig(filename string) (Config, error) {
 	_, root, err := parseConfigFile(filename)
+
 	if err != nil {
 		if os.IsNotExist(err) {
 			root = NewBlankRoot()
@@ -331,6 +337,7 @@ func pathError(err error) error {
 		}
 
 	}
+
 	return err
 }
 
@@ -339,11 +346,14 @@ func findRegularFile(p string) string {
 		if s, err := os.Stat(p); err == nil && s.Mode().IsRegular() {
 			return p
 		}
+
 		newPath := filepath.Dir(p)
 		if newPath == p || newPath == "/" || newPath == "." {
 			break
 		}
+
 		p = newPath
 	}
+
 	return ""
 }

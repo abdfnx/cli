@@ -56,18 +56,18 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 			Alternatively, pass in a token on standard input by using %[1]s--with-token%[1]s.
 			The minimum required scopes for the token are: "repo", "read:org".
 
-			The --scopes flag accepts a comma separated list of scopes you want your secman credentials to have. If
-			absent, this command ensures that secman has access to a minimum set of scopes.
+			The --scopes flag accepts a comma separated list of scopes you want your tran credentials to have. If
+			absent, this command ensures that tran has access to a minimum set of scopes.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# start interactive setup
-			secman auth login
+			tran auth login
 
 			# authenticate against github.com by reading the token from a file
-			secman auth login --with-token < mytoken.txt
+			tran auth login --with-token < mytoken.txt
 
 			# authenticate with a specific GitHub Enterprise Server instance
-			secman auth login --hostname enterprise.internal
+			tran auth login --hostname enterprise.internal
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !opts.IO.CanPrompt() && !(tokenStdin || opts.Web) {
@@ -112,7 +112,7 @@ func NewCmdLogin(f *cmdutil.Factory, runF func(*LoginOptions) error) *cobra.Comm
 	}
 
 	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "", "", "The hostname of the GitHub instance to authenticate with")
-	cmd.Flags().StringSliceVarP(&opts.Scopes, "scopes", "s", nil, "Additional authentication scopes for secman to have")
+	cmd.Flags().StringSliceVarP(&opts.Scopes, "scopes", "s", nil, "Additional authentication scopes for tran to have")
 	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read token from standard input")
 	cmd.Flags().BoolVarP(&opts.Web, "web", "w", false, "Open a browser to authenticate")
 
@@ -142,7 +142,7 @@ func loginRun(opts *LoginOptions) error {
 		var roErr *config.ReadOnlyEnvError
 		if errors.As(err, &roErr) {
 			fmt.Fprintf(opts.IO.ErrOut, "The value of the %s environment variable is being used for authentication.\n", roErr.Variable)
-			fmt.Fprint(opts.IO.ErrOut, "To have secman store credentials instead, first clear the value from the environment.\n")
+			fmt.Fprint(opts.IO.ErrOut, "To have tran store credentials instead, first clear the value from the environment.\n")
 			return cmdutil.SilentError
 		}
 		return err

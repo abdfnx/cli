@@ -3,7 +3,7 @@ package authflow
 const oauthSuccessPage = `
 <!DOCTYPE html>
 <meta charset="utf-8" />
-<title>Success: Secman With GitHub</title>
+<title>Success: Tran With GitHub</title>
 <style type="text/css">
   body {
     color: #1b1f23;
@@ -33,9 +33,8 @@ const oauthSuccessPage = `
   }
 </style>
 <body>
-  <img src="https://assets.secman.dev/logo.svg" />
   <div class="box">
-    <h1>Successfully authenticated Secman With Github 🔗</h1>
+    <h1>Successfully authenticated Tran With Github 🔗</h1>
     <p>You may now close this tab and return to the terminal.</p>
   </div>
 </body>

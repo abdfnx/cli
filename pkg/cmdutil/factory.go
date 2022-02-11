@@ -7,7 +7,6 @@ import (
 	"github.com/abdfnx/gh/core/config"
 	"github.com/abdfnx/gh/core/ghrepo"
 	"github.com/abdfnx/gh/pkg/iostreams"
-	"github.com/scmn-dev/secman/tools/packages"
 )
 
 type Browser interface {
@@ -23,8 +22,6 @@ type Factory struct {
 	Remotes    func() (context.Remotes, error)
 	Config     func() (config.Config, error)
 	Branch     func() (string, error)
-
-	PackageManager packages.PackageManager
 
 	Executable string
 }

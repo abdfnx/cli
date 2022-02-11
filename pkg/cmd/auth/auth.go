@@ -15,7 +15,7 @@ func NewCmdAuth(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth <command>",
 		Short: "Login, logout, and refresh your authentication with github.",
-		Long:  `Manage secman's authentication state.`,
+		Long:  `Manage tran's authentication state.`,
 	}
 
 	cmdutil.DisableAuthCheck(cmd)

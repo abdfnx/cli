@@ -116,12 +116,12 @@ func browserLauncher(f *cmdutil.Factory) string {
 }
 
 func executable() string {
-	secman := "secman"
+	tran := "tran"
 	if exe, err := os.Executable(); err == nil {
-		secman = exe
+		tran = exe
 	}
 
-	return secman
+	return tran
 }
 
 func configFunc() func() (config.Config, error) {

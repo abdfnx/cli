@@ -45,14 +45,14 @@ func NewCmdRefresh(f *cmdutil.Factory, runF func(*RefreshOptions) error) *cobra.
 		Short: "Refresh stored authentication credentials.",
 		Long: heredoc.Doc(`Expand or fix the permission scopes for stored credentials.
 
-			The --scopes flag accepts a comma separated list of scopes you want your secman credentials to have. If
-			absent, this command ensures that secman has access to a minimum set of scopes.
+			The --scopes flag accepts a comma separated list of scopes you want your tran credentials to have. If
+			absent, this command ensures that tran has access to a minimum set of scopes.
 		`),
 		Example: heredoc.Doc(`
-			secman auth refresh --scopes write:org,read:public_key
-			# => open a browser to add write:org and read:public_key scopes for use with secman api
+			tran auth refresh --scopes write:org,read:public_key
+			# => open a browser to add write:org and read:public_key scopes for use with tran api
 
-			secman auth refresh
+			tran auth refresh
 			# => open a browser to ensure your authentication credentials have the correct minimum scopes
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {

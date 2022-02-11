@@ -173,7 +173,7 @@ func Login(opts *LoginOptions) error {
 	}
 
 	if gitProtocol != "" {
-		fmt.Fprintf(opts.IO.ErrOut, "- secman gh-config set --host %s git_protocol %s\n", hostname, gitProtocol)
+		fmt.Fprintf(opts.IO.ErrOut, "- tran gh-config set --host %s git_protocol %s\n", hostname, gitProtocol)
 		err := cfg.Set(hostname, "git_protocol", gitProtocol)
 		if err != nil {
 			return err

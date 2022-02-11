@@ -41,16 +41,16 @@ func NewCmdCredits(f *cmdutil.Factory, runF func(*CreditsOptions) error) *cobra.
 	cmd := &cobra.Command{
 		Use:   "credits",
 		Short: "View credits for this tool",
-		Long:  `View animated credits for secman, the tool you are currently using :)`,
+		Long:  `View animated credits for tran, the tool you are currently using :)`,
 		Example: heredoc.Doc(`
 			# see a credits animation for this project
-			secman credits
+			tran credits
 
 			# display a non-animated thank you
-			secman credits -s
+			tran credits -s
 
 			# just print the contributors, one per line
-			secman credits | cat
+			tran credits | cat
 		`),
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {

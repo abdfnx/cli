@@ -7,24 +7,24 @@ import (
 
 var HelpTopics = map[string]map[string]string{
 	"mintty": {
-		"short": "Information about using secman and gh-api with MinTTY",
+		"short": "Information about using tran and gh-api with MinTTY",
 		"long": heredoc.Doc(`
 			MinTTY is the terminal emulator that comes by default with Git
-			for Windows.  It has known issues with secman's ability to prompt a
+			for Windows.  It has known issues with tran's ability to prompt a
 			user for input.
-			There are a few workarounds to make secman work with MinTTY:
+			There are a few workarounds to make tran work with MinTTY:
 			- Reinstall Git for Windows, checking "Enable experimental support for pseudo consoles".
 
 			- Use a different terminal emulator with Git for Windows like Windows Terminal.
 			  You can run "C:\Program Files\Git\bin\bash.exe" from any terminal emulator to continue
 			  using all of the tooling in Git For Windows without MinTTY.
 
-			- Prefix invocations of secman with winpty, eg: "winpty secman auth login".
+			- Prefix invocations of tran with winpty, eg: "winpty tran auth login".
 			  NOTE: this can lead to some UI bugs.
 		`),
 	},
 	"environment": {
-		"short": "Environment variables that can be used with secman",
+		"short": "Environment variables that can be used with tran",
 		"long": heredoc.Doc(`
 			GH_TOKEN, GITHUB_TOKEN (in order of precedence): an authentication token for github.com
 			API requests. Setting this avoids being prompted to authenticate and takes precedence over
@@ -64,7 +64,7 @@ var HelpTopics = map[string]map[string]string{
 			available in the viewport. When the value is a percentage, it will be applied against
 			the number of columns available in the current viewport.
 
-			GH_NO_UPDATE_NOTIFIER: set to any value to disable update notifications. By default, secman
+			GH_NO_UPDATE_NOTIFIER: set to any value to disable update notifications. By default, tran
 			checks for new releases once every 24 hours and displays an upgrade notice on standard
 			error if a newer version was found.
 
@@ -73,7 +73,7 @@ var HelpTopics = map[string]map[string]string{
 		`),
 	},
 	"reference": {
-		"short": "A comprehensive reference of all secman commands",
+		"short": "A comprehensive reference of all tran commands",
 	},
 }
 
