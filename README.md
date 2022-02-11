@@ -2,4 +2,4 @@
 
 ---
 
-> The GitHub API was moved to the main secman repo at [**scmn-dev/secman/pkg/api/gh**](https://github.com/scmn-dev/secman/tree/main/pkg/api/gh)
+> The GitHub API for [tran](https://github.com/abdfnx/tran)
