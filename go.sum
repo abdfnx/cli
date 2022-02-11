@@ -52,6 +52,7 @@ github.com/Netflix/go-expect v0.0.0-20180615182759-c93bf25de8e8/go.mod h1:oX5x61
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Timothee-Cardoso/tc-exe v1.0.0/go.mod h1:dq8JjfgZPLtVNCSxRckj9GPhjaCm7IifIyqmkUgwAiM=
 github.com/abdfnx/gh v0.1.0/go.mod h1:ys3oDJrg0HbmBfp+IBRNgimg7voQRF97hsKz9+hmZf0=
+github.com/abdfnx/gh v0.1.1/go.mod h1:D+1wetvNz2YwVAi+ZjgVuXmGF2XnkUBBwtojd5uBGQY=
 github.com/abdfnx/git_config v0.0.2/go.mod h1:f1TOBGJT4JEeyrkD3uz1hQtFSBZmdI39ao+yuqXqyAg=
 github.com/abdfnx/git_config v0.0.3/go.mod h1:MVrl8232db9AG+U7riNnkyzn7TxczNmUhPA5ef8Z6Nk=
 github.com/abdfnx/git_config v0.0.32/go.mod h1:ZUF8HzpOLtnx4rbG3r4TeutEOfE1ys+Qd33egGNxcoM=
@@ -123,7 +124,6 @@ github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964/go.mod h1:Xd9
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/david-tomson/tran-git v0.0.1 h1:QUhcVfwNLMBefJPHsCy1LpARfqe12i5CDwo0D4lpcJo=
 github.com/david-tomson/tran-git v0.0.1/go.mod h1:nyXPGbSZlsXiSDEqx4raYiHjEEkqAkbNRqTYAi5UpT8=
 github.com/david-tomson/tran-git v0.0.2 h1:HwCVHQAeyiKoWUT5Uj8yJR/3JCBW7rOR5aWR/VfJQ4g=
 github.com/david-tomson/tran-git v0.0.2/go.mod h1:/JJ4r/eryoNTpWHuGOliMEI3OxvBxv949dCqusPU8xA=
