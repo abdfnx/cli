@@ -13,7 +13,7 @@ import (
 
 	"github.com/abdfnx/gh/core/ghinstance"
 	"github.com/henvic/httpretty"
-	"github.com/shurcooL/graphql"
+	"github.com/cli/shurcooL-graphql"
 )
 
 // ClientOption represents an argument to NewClient
