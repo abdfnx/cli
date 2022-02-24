@@ -2,4 +2,4 @@
 
 ---
 
-> The GitHub API for [tran](https://github.com/abdfnx/tran) to authenticate.
+> The GitHub API for [tran](https://github.com/abdfnx/tran).
